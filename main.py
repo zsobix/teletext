@@ -24,7 +24,10 @@ class TeletextReader:
     
     @property
     def getPageGif(self):
-        return f"https://teletext.hu/mtv1/{self.soup.img['src']}"
+        try:
+            return f"https://teletext.hu/mtv1/{self.soup.img['src']}"
+        except TypeError:
+            return "https://teletext.hu/mtv1/images/100-01.gif"
 
     @property
     def prevPage(self):
