@@ -2,14 +2,15 @@
 
 import requests
 from bs4 import BeautifulSoup
+import json
 
 
-
-class TeletextReader:
+class hunTeletextReader:
     def __init__(self):
         self.pagenum = "100"
         self.subpage = "01"
         self.getPage()
+        self.colorbuttonsInit()
 
     def getPage(self):
         url = f"https://teletext.hu/mtv1/{self.pagenum}-{self.subpage}.HTM"
@@ -19,7 +20,7 @@ class TeletextReader:
             #"headers": {"Referer": "https://teletext.hu/"}
         }
 
-        rq=requests.post(url, **kwargs)
+        rq=requests.get(url, **kwargs)
         self.soup = BeautifulSoup(rq.text, 'html.parser')
     
     @property
@@ -60,3 +61,64 @@ class TeletextReader:
             return None
         else:
             return value
+
+    def colorbuttonsInit(self):
+        try:
+            buttons = []
+            for button in self.soup.find_all('area'):
+                buttons.append(button.get('href').replace('.HTM', '').split('-'))
+            self.colorbuttons = [buttons[0], buttons[1], buttons[2], buttons[3]]
+            return self.colorbuttons
+        except:
+            return self.colorbuttons
+
+class atTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "orf1"
+    
+    def getPage(self):
+        url = f"https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/{self.pagenum}"
+        rq=requests.get(url)
+        self.json = json.loads(rq.text)
+    
+    @property
+    def getPageGif(self):
+        #test rq
+        url = f"https://appmeta.orf.at/teletext/{self.stationid}/{self.pagenum}_00{self.subpage}.png"
+        return url
+    
+    @property
+    def prevPage(self):
+        value = self.json["previousPage"]
+        if value == '0' or value == 0:
+            return None
+        else:
+            return str(value)
+
+    @property
+    def nextPage(self):
+        value = self.json["nextPage"]
+        if value == '0' or value == 0:
+            return None
+        else:
+            return str(value)
+
+    @property
+    def subpages(self):
+        value = len(teletext.json["subpages"])
+        if value == '0' or value == 0:
+            return None
+        else:
+            print(value)
+            return value
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://afeeds.orf.at/teletext/api/v2/mobile/channels/orf1/pages/{pageNum}"
+            rq=requests.get(url)
+            json.loads(rq.text)
+            return True
+        except:
+            return False
