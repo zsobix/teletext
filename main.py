@@ -3,7 +3,8 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-
+from urllib.parse import urlparse
+from urllib.parse import parse_qs
 
 class hunTeletextReader:
     def __init__(self):
@@ -92,7 +93,9 @@ class hunTeletextReader:
         try:
             kwargs = {
             "headers": {"Referer": "https://teletext.hu/", "Origin": "https://teletext.hu"},
-            "data": f"page={self.pagenum}&ch=1&mode=graph"
+            "data": {"page": pageNum,
+                    "ch":1,
+                    "mode":"graph"}
 
             }
             soup = BeautifulSoup(requests.post("https://teletext.hu/main.php", **kwargs).text, 'html.parser')
@@ -117,6 +120,7 @@ class atTeletextReader:
         self.subpage = "01"
         #orf1, orf2, orfiii, or sportplus
         self.stationid = "orf1"
+        self.getPage()
     
     def getPage(self):
         url = f"https://afeeds.orf.at/teletext/api/v2/mobile/channels/{self.stationid}/pages/{self.pagenum}"
@@ -157,7 +161,7 @@ class atTeletextReader:
         try:
             url = f"https://afeeds.orf.at/teletext/api/v2/mobile/channels/{self.stationid}/pages/{pageNum}"
             rq=requests.get(url)
-            json.loads(rq.text)
+            jason = json.loads(rq.text)['subpages']
             return True
         except:
             return False
@@ -168,6 +172,7 @@ class gerTeletextReader:
         self.subpage = "1"
         # zdf, zdfneo, zdfinfo, or 3sat
         self.stationid = "zdf"
+        self.getPage()
     
     def getPage(self):
         if self.subpage == "1":
@@ -211,3 +216,77 @@ class gerTeletextReader:
             return True
         except:
             return False
+
+class itTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "1"
+        self.stationid = "rai"
+        self.region = "Nazionale"
+        self.getPage()
+
+    def getPage(self):
+        url = f"https://www.servizitelevideo.rai.it/televideo/pub/popupTelevideo.jsp?p={self.pagenum}&s={int(self.subpage)}&r={self.region}&pagetocall=popupTelevideo.jsp"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+    
+    @property
+    def getPageGif(self):
+        try:
+            url = self.soup.find(id="schermata").find_all("img")[0]['src']
+            return f"https://www.servizitelevideo.rai.it{url}"
+        except:
+            return f"https://www.servizitelevideo.rai.it/televideo/pub/tt4web/{self.region}/16_9_page-100.png"
+        
+
+    @property
+    def prevPage(self):
+        url = self.soup.find_all("div", {"class": "txtBtn"})[0].find_all("a")[0]['href']
+        parsed_url = urlparse(url)
+        captured_value = parse_qs(parsed_url.query)
+        value = captured_value['p'][0]
+
+        if value == '0':
+            return None
+        else:
+            return value
+
+    @property
+    def nextPage(self):
+        url = self.soup.find_all("div", {"class": "txtBtn"})[0].find_all("a")[4]['href']
+        parsed_url = urlparse(url)
+        captured_value = parse_qs(parsed_url.query)
+        value = captured_value['p'][0]
+        if value == '0':
+            return None
+        else:
+            return value
+
+    @property
+    def subpages(self):
+        try:
+            value = self.soup.find_all("div", {"class": "txtNum"})[0].find_all("span")[0].string.strip(' / ')
+        except:
+            return 1
+        if value == '0' or value == 0:
+            return None
+        else:
+            return int(value)
+    
+    def checkpageNum(self, pageNum):
+        return True
+    
+    @property
+    def regions(self):
+        try:
+            value = self.soup.find(id="regioni").find_all("option")
+            regions = []
+            for region in value:
+                if region.string != "Scegli la regione":
+                    regions.append(region['value'])
+            return regions
+        except:
+            regions = ["Nazionale"]
+            return regions
