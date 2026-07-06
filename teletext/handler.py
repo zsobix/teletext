@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import json
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
+import base64
 
 class hunTeletextReader:
     def __init__(self):
@@ -248,10 +249,12 @@ class itTeletextReader:
         captured_value = parse_qs(parsed_url.query)
         value = captured_value['p'][0]
 
-        if value == '0':
-            return None
-        else:
-            return value
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
 
     @property
     def nextPage(self):
@@ -259,10 +262,13 @@ class itTeletextReader:
         parsed_url = urlparse(url)
         captured_value = parse_qs(parsed_url.query)
         value = captured_value['p'][0]
-        if value == '0':
-            return None
-        else:
-            return value
+
+        while True:
+            if int(value) > 999:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
 
     @property
     def subpages(self):
@@ -276,7 +282,13 @@ class itTeletextReader:
             return int(value)
     
     def checkpageNum(self, pageNum):
-        return True
+        url = f"https://www.servizitelevideo.rai.it/televideo/pub/tt4web/{self.region}/16_9_page-{pageNum}.png"
+        rq = requests.get(url).status_code
+        print(rq)
+        if rq == 404:
+            return False
+        else:
+            return True
     
     @property
     def regions(self):
@@ -290,3 +302,191 @@ class itTeletextReader:
         except:
             regions = ["Nazionale"]
             return regions
+
+class seTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "svt"
+        self.getPage()
+    
+    def getPage(self):
+        url = f"https://www.svt.se/text-tv/api/{self.pagenum}"
+
+        rq = requests.get(url)
+
+        self.json = json.loads(rq.text)
+    
+    @property
+    def getPageGif(self):
+        try:
+            value = self.json["data"]["subPages"][int(self.subpage)-1]["gifAsBase64"]
+            return base64.b64decode(value)
+        except:
+            pagenum = self.pagenum
+            subpage = self.subpage
+            self.pagenum = "100"
+            self.subpage = "01"
+            self.getPage()
+            value = self.json["data"]["subPages"][int(self.subpage)-1]["gifAsBase64"]
+            self.pagenum = pagenum
+            self.subpage = subpage
+            self.getPage()
+            return base64.b64decode(value)
+    
+    @property
+    def prevPage(self):
+        value = self.json["data"]["prevPage"]
+        if value == "":
+            return None
+        else:
+            return value
+
+    @property
+    def nextPage(self):
+        value = self.json["data"]["nextPage"]
+        if value == "":
+            return None
+        else:
+            return value
+
+    @property
+    def subpages(self):
+        value = len(self.json["data"]["subPages"])
+        return value
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://www.svt.se/text-tv/api/{pageNum}"
+
+            rq = requests.get(url)
+
+            self.json = json.loads(rq.text)
+
+            value = self.json["data"]["subPages"][int(self.subpage)-1]["gifAsBase64"]
+            return True
+        except:
+            return False
+
+class chTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "SRF1"
+        self.getPage()
+    
+    def getPage(self):
+        url = f"https://api.teletext.ch/channels/{self.stationid}/pages/{self.pagenum}"
+
+        rq = requests.get(url)
+
+        self.json = json.loads(rq.text)
+    
+    @property
+    def getPageGif(self):
+        try:
+            value = f"https://api.teletext.ch/online/pics/large/{self.stationid}_{self.pagenum}-{int(self.subpage)-1}.gif"
+            return value
+        except:
+            return f"https://api.teletext.ch/online/pics/large/{self.stationid}_100-0.gif"
+    
+    @property
+    def prevPage(self):
+        try:
+            value = self.json["previousPage"]
+            return value
+        except:
+            return None
+
+    @property
+    def nextPage(self):
+        try:
+            value = self.json["nextPage"]
+            return value
+        except:
+            return None
+
+    @property
+    def subpages(self):
+        value = len(self.json["subpages"])
+        return value
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://api.teletext.ch/channels/{self.stationid}/pages/{pageNum}"
+
+            rq = requests.get(url).json()
+
+            value = rq["subpages"]
+            return True
+        except:
+            return False
+
+class czTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "ČT"
+        self.getPage()
+    
+    def getPage(self):
+        url = f"https://api-teletext.ceskatelevize.cz/pages"
+
+        rq = requests.get(url)
+
+        self.json = json.loads(rq.text)
+    
+    @property
+    def subpageletter(self):
+        value = self.json["data"][str(self.pagenum)]["subpages"][int(self.subpage)]
+        return value
+
+    @property
+    def getPageGif(self):
+        try:
+            if self.subpages > 1:
+                value = f"https://api-teletext.ceskatelevize.cz/pages/{self.pagenum}{self.subpageletter}/image.webp"
+            else:
+                value = f"https://api-teletext.ceskatelevize.cz/pages/{self.pagenum}/image.webp"
+            return value
+        except:
+            return f"https://api-teletext.ceskatelevize.cz/pages/100A/image.webp"
+    
+    @property
+    def prevPage(self):
+        value = int(self.pagenum)-1
+
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
+
+    @property
+    def nextPage(self):
+        value = int(self.pagenum)+1
+
+        while True:
+            if int(value) > 999:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
+
+    @property
+    def subpages(self):
+        try:
+            value = len(self.json["data"][str(self.pagenum)]["subpages"])
+            if value < 1:
+                return 1
+            return value
+        except:
+            return 1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            value = self.json["data"][str(pageNum)]["subpages"]
+            return True
+        except:
+            return False

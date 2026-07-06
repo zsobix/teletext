@@ -1,11 +1,11 @@
-from main import *
+from handler import *
 
 import gi
 
 gi.require_version('Gtk', '4.0')
 gi.require_version('Adw', '1')
 gi.require_version("WebKit", "6.0")
-from gi.repository import Gtk, Gdk, Adw, Gio, GdkPixbuf, WebKit
+from gi.repository import Gtk, Gdk, Adw, Gio, GdkPixbuf, WebKit, GLib
 
 
 css_provider = Gtk.CssProvider()
@@ -64,6 +64,14 @@ css_provider.load_from_string("""
     margin: 5px;
     border-radius: 30px;
 }
+.background {
+    background-color: #222229;
+    border-color: #222229;
+}
+.sidebar {
+    background-color: #282830;
+    border-color: #282830;
+}
 """)
 Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
@@ -71,9 +79,10 @@ Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css_provide
 class MainWindow(Gtk.ApplicationWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.set_default_size(760, 748)
+        self.set_default_size(900, 800)
         self.set_title("Teletext")
         self.titlebar = Adw.HeaderBar()
+        self.titlebar.set_css_classes(["background"])
         self.set_titlebar(self.titlebar)
         self.country = "hu"
         
@@ -94,12 +103,20 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = gerTeletextReader()
             case "it":
                 self.teletext = itTeletextReader()
+            case "se":
+                self.teletext = seTeletextReader()
+            case "ch":
+                self.teletext = chTeletextReader()
+            case "cz":
+                self.teletext = czTeletextReader()
         
         self.window = Adw.NavigationSplitView()
         self.set_child(self.window)
         self.content = Adw.NavigationPage(title="content")
+        self.content.set_css_classes(["background"])
         self.window.set_content(self.content)
         self.sidebar = Adw.NavigationPage(title="countries")
+        self.sidebar.set_css_classes(["sidebar"])
         self.window.set_sidebar(self.sidebar)
 
         self.window.set_collapsed(True)
@@ -108,37 +125,15 @@ class MainWindow(Gtk.ApplicationWindow):
         self.sidebox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.sidebar.set_child(self.sidebox)
 
-        hungary = Gtk.Button()
-        hungary.connect('clicked', self.countrySelect)
-        huntitle = Gtk.Label()
-        huntitle.set_markup('<span size="x-large">🇭🇺 Hungary</span>')
-        hungary.set_child(huntitle)
-        hungary.set_css_classes(["countrybutton"])
-        self.sidebox.append(hungary)
-
-        austria = Gtk.Button()
-        austria.connect('clicked', self.countrySelect)
-        attitle = Gtk.Label()
-        attitle.set_markup('<span size="x-large">🇦🇹 Austria</span>')
-        austria.set_child(attitle)
-        austria.set_css_classes(["countrybutton"])
-        self.sidebox.append(austria)
-
-        germany = Gtk.Button()
-        germany.connect('clicked', self.countrySelect)
-        gertitle = Gtk.Label()
-        gertitle.set_markup('<span size="x-large">🇩🇪 Germany</span>')
-        germany.set_child(gertitle)
-        germany.set_css_classes(["countrybutton"])
-        self.sidebox.append(germany)
-
-        italy = Gtk.Button()
-        italy.connect('clicked', self.countrySelect)
-        ittitle = Gtk.Label()
-        ittitle.set_markup('<span size="x-large">🇮🇹 Italy (experimental)</span>')
-        italy.set_child(ittitle)
-        italy.set_css_classes(["countrybutton"])
-        self.sidebox.append(italy)
+        countries = ["🇭🇺 Hungary", "🇦🇹 Austria", "🇩🇪 Germany", "🇮🇹 Italy (experimental)", "🇸🇪 Sweden", "🇨🇭 Switzerland", "🇨🇿 Czechia"]
+        for country in countries:
+            button = Gtk.Button()
+            button.connect('clicked', self.countrySelect)
+            buttitle = Gtk.Label()
+            buttitle.set_markup(f'<span size="x-large">{country}</span>')
+            button.set_child(buttitle)
+            button.set_css_classes(["countrybutton"])
+            self.sidebox.append(button)
 
         self.home()
 
@@ -165,12 +160,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 image.set_css_classes(["image"])
                 self.ccbox.append(image)
             case "it":
-                try:
-                    img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                    img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                except:
-                    img = Gio.File.new_for_uri("https://www.servizitelevideo.rai.it/cms2008/Contents/immagini/2022/4/banner_700_Meteo_3_644x400.png")
-                    img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+                img = Gio.File.new_for_uri(self.teletext.getPageGif)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
                 image = Gtk.Image().new_from_pixbuf(img2)
                 image.set_pixel_size(520)
                 image.set_css_classes(["image"])
@@ -187,7 +178,28 @@ class MainWindow(Gtk.ApplicationWindow):
                 else:
                     self.view.load_uri(f"https://teletext.zdf.de/teletext/{self.teletext.stationid}/seiten/klassisch/{self.teletext.pagenum}_{int(self.teletext.subpage)-1}.html")
                 scroll.set_child(self.view)
-
+            case "se":
+                raw = GLib.Bytes(self.teletext.getPageGif)
+                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
+            case "ch":
+                img = Gio.File.new_for_uri(self.teletext.getPageGif)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
+            case "cz":
+                img = Gio.File.new_for_uri(self.teletext.getPageGif)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
         if self.country == "hu":
             #buttons
             self.colorbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -224,7 +236,7 @@ class MainWindow(Gtk.ApplicationWindow):
         text = Gtk.Label()
         text.set_markup('<span size="large">Page Number</span>')
         inputbuf = Gtk.EntryBuffer()
-        inputbuf.set_text(self.teletext.pagenum, -1)
+        inputbuf.set_text(str(self.teletext.pagenum), -1)
 
         self.input = Gtk.Entry().new_with_buffer(inputbuf)
         self.input.connect('notify::text', self.pagenumEntry)
@@ -265,20 +277,30 @@ class MainWindow(Gtk.ApplicationWindow):
             case "hu":
                 self.stations = ["mtva"]
             case "at":
-                self.stations = ["orf1", "orf2", "orfiii", "sportplus"]
+                self.stations = ["orf 1", "orf 2", "orf iii", "sport plus"]
             case "de":
-                self.stations = ["zdf", "zdfneo", "zdfinfo", "3sat"]
+                self.stations = ["zdf", "zdf neo", "zdf info", "3sat"]
             case "it":
                 self.stations = ["rai"]
+            case "se":
+                self.stations = ["svt"]
+            case "ch":
+                self.stations = ["SRF 1", "SRF zwei", "SRF Info", "RTS Un", "RTS Deux", "RSI LA 1", "RSI LA 2"]
+            case "cz":
+                self.stations = ["ČT"]
         self.togglegroup = Adw.ToggleGroup()
         self.togglegroup.set_css_classes(["flat", "round"])
+        try:
+            if self.station not in self.stations:
+                raise Exception
+        except:
+            self.station = self.stations[0]
         for station in self.stations:
             toggle = Adw.Toggle()
             label = Gtk.Label()
             label.set_markup(f'<span>{station.upper()}</span>')
             toggle.set_child(label)
-            if station == self.teletext.stationid:
-                self.togglegroup.set_active(self.stations.index(station))
+            self.togglegroup.set_active(self.stations.index(self.station))
             self.togglegroup.add(toggle)
         self.togglegroup.connect('notify::active', self.stationSwitcher)
         self.inputbox.append(self.togglegroup)
@@ -352,7 +374,36 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "1"
                 self.home()
-
+            case "se":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "1"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "1"
+                self.home()
+            case "ch":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "1"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "1"
+                self.home()
+            case "cz":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def prevPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -393,6 +444,35 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "1"
                 self.home()
+            case "se":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "1"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "1"
+                self.home()
+            case "ch":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "1"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "1"
+                self.home()
+            case "cz":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.telete
     def nextsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -418,7 +498,21 @@ class MainWindow(Gtk.ApplicationWindow):
                 if nextsubpage <= self.teletext.subpages:
                     self.teletext.subpage = f"{nextsubpage}"
                     self.home()
-
+            case "se":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
+            case "ch":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
+            case "cz":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
     def prevsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -444,7 +538,21 @@ class MainWindow(Gtk.ApplicationWindow):
                 if prevsubpage >= 1:
                     self.teletext.subpage = f"{prevsubpage}"
                     self.home()
-    
+            case "se":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "ch":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "cz":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
     def redbuttonHandler(self, *args, **kwargs):
         self.teletext.pagenum = self.teletext.colorbuttons[0][0]
         self.teletext.subpage = self.teletext.colorbuttons[0][1]
@@ -490,6 +598,18 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.country = "it"
                 self.init()
                 self.home()
+            case "🇸🇪 Sweden":
+                self.country = "se"
+                self.init()
+                self.home()
+            case "🇨🇭 Switzerland":
+                self.country = "ch"
+                self.init()
+                self.home()
+            case "🇨🇿 Czechia":
+                self.country = "cz"
+                self.init()
+                self.home()
     
     def init(self, *args, **kwargs):
         match self.country:
@@ -501,10 +621,17 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = gerTeletextReader()
             case "it":
                 self.teletext = itTeletextReader()
+            case "se":
+                self.teletext = seTeletextReader()
+            case "ch":
+                self.teletext = chTeletextReader()
+            case "cz":
+                self.teletext = czTeletextReader()
 
     def stationSwitcher(self, *args, **kwargs):
-        if self.teletext.stationid != self.stations[self.togglegroup.get_active()]:
-            self.teletext.stationid = self.stations[self.togglegroup.get_active()]
+        if self.teletext.stationid != self.stations[self.togglegroup.get_active()].replace(" ", ""):
+            self.teletext.stationid = self.stations[self.togglegroup.get_active()].replace(" ", "")
+            self.station = self.stations[self.togglegroup.get_active()]
             print(self.teletext.stationid)
             self.togglegroup = Adw.ToggleGroup()
             self.teletext.pagenum = "100"
@@ -535,5 +662,5 @@ class MyApp(Adw.Application):
         self.win.present()
 
 if __name__ == "__main__":
-    app = MyApp(application_id="xyz.zsobix.lidlplusui")
+    app = MyApp(application_id="xyz.zsobix.teletext")
     app.run()
