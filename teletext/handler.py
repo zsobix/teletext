@@ -284,7 +284,6 @@ class itTeletextReader:
     def checkpageNum(self, pageNum):
         url = f"https://www.servizitelevideo.rai.it/televideo/pub/tt4web/{self.region}/16_9_page-{pageNum}.png"
         rq = requests.get(url).status_code
-        print(rq)
         if rq == 404:
             return False
         else:
@@ -487,6 +486,82 @@ class czTeletextReader:
     def checkpageNum(self, pageNum):
         try:
             value = self.json["data"][str(pageNum)]["subpages"]
+            return True
+        except:
+            return False
+
+class fiTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "yle"
+        self.getPage()
+        
+    def getPage(self):
+        url = f"https://yle.fi/aihe/tekstitv?P={self.pagenum}#{int(self.subpage)}"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+    @property
+    def getPageGif(self):
+        try:
+            url = f"https://yle.fi/aihe/yle-ttv/json?P={self.pagenum}_00{self.subpage}"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+            value = son["data"][0]["content"]["image"]
+            value = BeautifulSoup(value, 'html.parser').img["src"].replace("data:image/png;base64,", "")
+            return base64.b64decode(value)
+        except:
+            url = f"https://yle.fi/aihe/yle-ttv/json?P=100_0001"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+            value = son["data"][0]["content"]["image"]
+            value = BeautifulSoup(value, 'html.parser').img["src"].replace("data:image/png;base64,", "")
+            return base64.b64decode(value)
+    
+    @property
+    def prevPage(self):
+        try:
+            value = self.soup.find_all("div", {"class": "yle-ttv__pagination"})[0].find_all('a', {"class": "yle-ttv__button"})[0]["href"].replace("?P=", "")
+            return value
+        except:
+            return None
+
+    @property
+    def nextPage(self):
+        try:
+            value = self.soup.find_all("div", {"class": "yle-ttv__pagination"})[0].find_all('a', {"class": "yle-ttv__button"})[-1]["href"].replace("?P=", "")
+            return value
+        except:
+            return None
+
+    @property
+    def subpages(self):
+        try:
+            url = f"https://yle.fi/aihe/yle-ttv/json?P={self.pagenum}_0001"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+            value = son["data"][0]["info"]["page"]["subpages"]
+            return int(value)
+        except:
+            return 1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://yle.fi/aihe/yle-ttv/json?P={pageNum}_0001"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+            value = son["data"][0]["page"]["page"]
             return True
         except:
             return False
