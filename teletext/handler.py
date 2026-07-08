@@ -437,7 +437,7 @@ class czTeletextReader:
     
     @property
     def subpageletter(self):
-        value = self.json["data"][str(self.pagenum)]["subpages"][int(self.subpage)]
+        value = self.json["data"][str(self.pagenum)]["subpages"][int(self.subpage)-1]
         return value
 
     @property
@@ -565,3 +565,121 @@ class fiTeletextReader:
             return True
         except:
             return False
+
+class otherTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "s1de"
+        self.getPage()
+        
+    def getPage(self):
+        url = f"https://som-teletextviewer.sim-technik.de/api/page?ttx_select={self.stationid}&pagnr={self.pagenum}_{self.subpage}"
+
+        rq = requests.get(url)
+
+        self.json = json.loads(rq.text)
+
+    @property
+    def getPageGif(self):
+        try:
+            url = f"https://som-teletextviewer.sim-technik.de/api/page/png?ttx_select={self.stationid}&pagnr={self.pagenum}_{self.subpage}"
+
+            rq = requests.get(url).status_code
+            if rq == 404:
+                raise Exception
+            return url
+        except:
+            return "https://som-teletextviewer.sim-technik.de/api/page/png?ttx_select=s1de&pagnr=100_01"
+    
+    @property
+    def prevPage(self):
+        value = int(self.pagenum)-1
+
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
+
+    @property
+    def nextPage(self):
+        value = int(self.pagenum)+1
+
+        while True:
+            if int(value) > 900:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
+
+    @property
+    def subpages(self):
+        value = int(self.subpage)
+
+        while True:
+            if int(value) > 50:
+                return 1
+            if not self.checksubpageNum(value):
+                return int(value)-1
+            value = int(value)+1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://som-teletextviewer.sim-technik.de/api/page?ttx_select={self.stationid}&pagnr={pageNum}_01"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+            if son["pagnr"] != f"{pageNum}_01":
+                raise Exception
+            else:
+                return True
+        except:
+            return False
+    
+    def checksubpageNum(self, subpageNum):
+        try:
+            url = f"https://som-teletextviewer.sim-technik.de/api/page?ttx_select={self.stationid}&pagnr={self.pagenum}_{subpageNum:02d}"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+            return son["pagnr"]==f"{self.pagenum}_{subpageNum:02d}"
+        except:
+            return False
+
+    @property
+    def stations(self):
+        url = "https://som-teletextviewer.sim-technik.de/api/stations"
+
+        rq = requests.get(url)
+
+        son = json.loads(rq.text)
+
+        stations = []
+        for station in son["stations"]:
+            if station["label"].startswith("AT-"):
+                stations.append(f"Austria {station["label"].replace("AT-", "")} ({station["key"]})")
+            elif station["label"].startswith("CH-"):
+                stations.append(f"Switzerland {station["label"].replace("CH-", "")} ({station["key"]})")
+            else:
+                stations.append(f"{station["label"]} ({station["key"]})")
+        
+        return stations
+
+    @property
+    def stationsid(self):
+        url = "https://som-teletextviewer.sim-technik.de/api/stations"
+
+        rq = requests.get(url)
+
+        son = json.loads(rq.text)
+
+        stations = []
+        for station in son["stations"]:
+            stations.append(station["key"])
+        
+        return stations
+        
