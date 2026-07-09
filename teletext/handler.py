@@ -204,7 +204,7 @@ class gerTeletextReader:
     def subpages(self):
         value = self.soup.body.get('subpages')
         if value == '0' or value == 0:
-            return None
+            return 1
         else:
             return int(value)
     
@@ -682,4 +682,221 @@ class otherTeletextReader:
             stations.append(station["key"])
         
         return stations
+
+class dkTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "dr"
+        self.getPage()
         
+    def getPage(self):
+        url = f"https://www.dr.dk/cgi-bin/fttv1.exe/{self.pagenum}/{int(self.subpage)}"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+    @property
+    def getPageGif(self):
+        try:
+            value = self.soup.find_all('a')[0].find_all('img')[0]["src"]
+            return f"https://www.dr.dk{value}"
+        except:
+            pagenum = self.pagenum
+            subpage = self.subpage
+            self.pagenum = "100"
+            self.subpage = "01"
+            self.getPage()
+            value = self.soup.find_all('a')[0].find_all('img')[0]["src"]
+            self.pagenum = pagenum
+            self.subpage = subpage
+            self.getPage()
+            return f"https://www.dr.dk{value}"
+    
+    @property
+    def prevPage(self):
+        value = int(self.pagenum)-1
+
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
+
+    @property
+    def nextPage(self):
+        value = int(self.pagenum)+1
+
+        while True:
+            if int(value) > 900:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
+
+    @property
+    def subpages(self):
+        # return 1
+        
+        value = int(self.subpage)
+
+        while True:
+            if int(value) > 50:
+                return 1
+            if not self.checksubpageNum(value):
+                return int(value)-1
+            value = int(value)+1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://www.dr.dk/cgi-bin/fttv1.exe/{pageNum}"
+
+            rq = requests.get(url)
+
+            self.soup = BeautifulSoup(rq.text, 'html.parser')
+            value = self.soup.find_all('a')[0].find_all('img')[0]["src"]
+            return True
+        except:
+            return False
+    
+    def checksubpageNum(self, subpageNum):
+        try:
+            url = f"https://www.dr.dk/cgi-bin/fttv1.exe/{self.pagenum}/{subpageNum}"
+
+            rq = requests.get(url)
+
+            self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+            value = self.soup.find_all('a')[0].find_all('img')[0]["src"]
+            return True
+        except:
+            return False
+    
+class other2TeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "br-alpha" #or DE_arte
+        self.getPage()
+        
+    def getPage(self):
+        url = f"https://zapi.zattoo.com/teletext/{self.stationid}/hd/{self.pagenum}/1.html"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+    @property
+    def getPageGif(self):
+        try:
+            value = self.soup.find_all('img')[0]["src"].replace('data:image/png;base64,', '')
+            return base64.b64decode(value)
+        except:
+            pagenum = self.pagenum
+            self.pagenum = "100"
+            self.getPage()
+            value = self.soup.find_all('img')[0]["src"].replace('data:image/png;base64,', '')
+            self.pagenum = pagenum
+            self.getPage()
+            return base64.b64decode(value)
+    
+    @property
+    def prevPage(self):
+        value = int(self.pagenum)-1
+
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
+
+    @property
+    def nextPage(self):
+        value = int(self.pagenum)+1
+
+        while True:
+            if int(value) > 900:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
+
+    @property
+    def subpages(self):
+        return 1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://zapi.zattoo.com/teletext/{self.stationid}/hd/{self.pagenum}/1.html"
+
+            rq = requests.get(url)
+
+            self.soup = BeautifulSoup(rq.text, 'html.parser')
+            value = self.soup.find_all('img')[0]["src"].replace('data:image/png;base64,', '')
+            return True
+        except:
+            return False
+
+class kikaTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "kika"
+        self.getPage()
+        
+    def getPage(self):
+        url = f"https://www.kika.de/kikatextpages/{self.pagenum}_00{int(self.subpage):02d}.htm"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+    @property
+    def getPageGif(self):
+        try:
+            value = f"https://www.kika.de/kikatextpages/{self.pagenum}_00{int(self.subpage):02d}.png"
+            return value
+        except:
+            value = "https://www.kika.de/kikatextpages/100_0001.png"
+            return value
+    
+    @property
+    def prevPage(self):
+        value = json.loads(self.soup.find(id="kikatext-page-data")['data-kikatext-page'])
+        prev = value["PREVPGNUM"]
+        if prev == "":
+            return None
+        else:
+            return int(prev)
+    @property
+    def nextPage(self):
+        value = json.loads(self.soup.find(id="kikatext-page-data")['data-kikatext-page'])
+        nextpg = value["NEXTPGNUM"]
+        if nextpg == "":
+            return None
+        else:
+            return int(nextpg)
+
+    @property
+    def subpages(self):
+        try:
+            value = len(self.soup.find("div", {"class": "SUBPGLIST"}).find_all('a'))+1
+            return value
+        except:
+            return 1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://www.kika.de/kikatextpages/{pageNum}_0001.png"
+
+            rq = requests.get(url).status_code
+
+            if rq == 302 or rq == 404:
+                return False
+            else:
+                return True
+        except:
+            return False

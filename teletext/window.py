@@ -52,12 +52,15 @@ css_provider.load_from_string("""
     border-radius: 15px;
 }
 .countrybutton {
-    margin-top: 10px;
-    margin-left: 5px;
-    margin-right: 5px;
-    margin-bottom: 10px;
+    margin: 10px;
     padding: 10px;
-    border-radius: 30px;
+    border-radius: 12px;
+    border-style: solid;
+    border-width: 1px;
+    border-color: grey;
+}
+.countrybutton:hover {
+    background-color: #282830;
 }
 .label {
     margin-top: 20px;
@@ -92,8 +95,6 @@ class MainWindow(Gtk.ApplicationWindow):
         self.titlebar.set_css_classes(["background"])
         self.set_titlebar(self.titlebar)
         self.country = "hu"
-        
-
 
         collapse = Gtk.Button()
         collapse.connect("clicked", self.collapse)
@@ -120,12 +121,20 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = fiTeletextReader()
             case "other":
                 self.teletext = otherTeletextReader()
+            case "dk":
+                self.teletext = dkTeletextReader()
+            case "other2":
+                self.teletext = other2TeletextReader()
+            case "kika":
+                self.teletext = kikaTeletextReader()
         
         self.window = Adw.NavigationSplitView()
         self.set_child(self.window)
+
         self.content = Adw.NavigationPage(title="content")
         self.content.set_css_classes(["background"])
         self.window.set_content(self.content)
+
         self.sidebar = Adw.NavigationPage(title="countries")
         self.sidebar.set_css_classes(["sidebar"])
         self.window.set_sidebar(self.sidebar)
@@ -133,11 +142,60 @@ class MainWindow(Gtk.ApplicationWindow):
         self.window.set_collapsed(True)
         self.window.set_show_content(True)
 
+        self.scrollsidebar = Gtk.ScrolledWindow()
+        self.scrollsidebar.set_min_content_width(250)
+        self.sidebar.set_child(self.scrollsidebar)
+
         self.sidebox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
-        self.sidebar.set_child(self.sidebox)
+        self.scrollsidebar.set_child(self.sidebox)
 
         # TODO make this a scrolled window with all channels separated
-        countries = ["🇭🇺 Hungary", "🇦🇹 Austria", "🇩🇪 Germany", "🇮🇹 Italy (slow)", "🇸🇪 Sweden", "🇨🇭 Switzerland", "🇨🇿 Czechia", "🇫🇮 Finland", "🇧🇺 Other"]
+        countries = ["🇭🇺 MTVA",
+                    "🇦🇹 ORF 1",
+                    "🇦🇹 ORF 2",
+                    "🇦🇹 ORF III",
+                    "🇦🇹 ORF Sport Plus",
+                    "🇦🇹 SAT.1",
+                    "🇦🇹 ProSieben",
+                    "🇦🇹 kabel eins",
+                    "🇦🇹 sixx",
+                    "🇦🇹 SAT.1 Gold",
+                    "🇦🇹 ProSieben MAXX",
+                    "🇦🇹 kabel eins Doku",
+                    "🇩🇪 ZDF",
+                    "🇩🇪 ZDFneo",
+                    "🇩🇪 ZDFinfo",
+                    "🇩🇪 3sat",
+                    "🇩🇪 ARD",
+                    "🇩🇪 Arte",
+                    "🇩🇪 KiKa",
+                    "🇩🇪 SAT.1",
+                    "🇩🇪 ProSieben",
+                    "🇩🇪 kabel eins",
+                    "🇩🇪 sixx",
+                    "🇩🇪 SAT.1 Gold",
+                    "🇩🇪 ProSieben MAXX",
+                    "🇩🇪 kabel eins Doku",
+                    "🇮🇹 Rai (slow)",
+                    "🇸🇪 SVT",
+                    "🇨🇭 SRF 1",
+                    "🇨🇭 SRF zwei",
+                    "🇨🇭 SRF Info",
+                    "🇨🇭 RTS 1",
+                    "🇨🇭 RTS 2",
+                    "🇨🇭 RSI LA 1",
+                    "🇨🇭 RSI LA 2",
+                    "🇨🇭 SAT.1",
+                    "🇨🇭 ProSieben",
+                    "🇨🇭 kabel eins", 
+                    "🇨🇭 sixx",
+                    "🇨🇭 SAT.1 Gold",
+                    "🇨🇭 ProSieben MAXX",
+                    "🇨🇭 Puls8",
+                    "🇨🇿 ČT",
+                    "🇫🇮 Yle",
+                    "🇩🇰 DR"]
+        
         for country in countries:
             button = Gtk.Button()
             button.connect('clicked', self.countrySelect)
@@ -221,6 +279,28 @@ class MainWindow(Gtk.ApplicationWindow):
                 image.set_css_classes(["image"])
                 self.ccbox.append(image)
             case "other":
+                img = Gio.File.new_for_uri(self.teletext.getPageGif)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
+            case "dk":
+                img = Gio.File.new_for_uri(self.teletext.getPageGif)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
+            case "other2":
+                raw = GLib.Bytes(self.teletext.getPageGif)
+                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
+            case "kika":
                 img = Gio.File.new_for_uri(self.teletext.getPageGif)
                 img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
                 image = Gtk.Image().new_from_pixbuf(img2)
@@ -317,6 +397,12 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.stations = ["ČT"]
             case "fi":
                 self.stations = ["yle"]
+            case "dk":
+                self.stations = ["dr"]
+            case "other2":
+                self.stations = ["br-alpha", "DE_arte"]
+            case "kika":
+                self.stations = ["kika"]
         if self.country != "other":
             self.togglegroup = Adw.ToggleGroup()
             self.togglegroup.set_css_classes(["round", "togglegroup"])
@@ -375,9 +461,13 @@ class MainWindow(Gtk.ApplicationWindow):
         if len(text) == 3:
             if self.teletext.checkpageNum(text):
                 self.teletext.pagenum = text
+                if self.country != "de":
+                    self.teletext.subpage = "01"
                 self.home()
             else:
                 self.teletext.pagenum = "100"
+                if self.country != "de":
+                    self.teletext.subpage = "01"
                 self.home()
     
     def nextPage(self, *args, **kwargs):
@@ -461,6 +551,36 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.subpage = "01"
                 self.home()
             case "other":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
+            case "dk":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
+            case "other2":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
+            case "kika":
                 try:
                     if self.teletext.nextPage != None:
                         self.teletext.pagenum = self.teletext.nextPage
@@ -560,6 +680,36 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "dk":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
+            case "other2":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
+            case "kika":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def nextsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -606,6 +756,21 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.subpage = f"{nextsubpage:02d}"
                     self.home()
             case "other":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
+            case "dk":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
+            case "other2":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
+            case "kika":
                 nextsubpage = int(self.teletext.subpage)+1
                 if nextsubpage <= self.teletext.subpages:
                     self.teletext.subpage = f"{nextsubpage:02d}"
@@ -660,6 +825,21 @@ class MainWindow(Gtk.ApplicationWindow):
                 if prevsubpage >= 1:
                     self.teletext.subpage = f"{prevsubpage:02d}"
                     self.home()
+            case "dk":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "other2":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "kika":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
     def redbuttonHandler(self, *args, **kwargs):
         self.teletext.pagenum = self.teletext.colorbuttons[0][0]
         self.teletext.subpage = self.teletext.colorbuttons[0][1]
@@ -689,40 +869,223 @@ class MainWindow(Gtk.ApplicationWindow):
 
     def countrySelect(self, *args, **kwargs):
         match args[0].get_child().get_text():
-            case "🇭🇺 Hungary":
+            case "🇭🇺 MTVA":
                 self.country = "hu"
                 self.init()
+                self.teletext.stationid = "mtva"
                 self.home()
-            case "🇦🇹 Austria":
+            case "🇦🇹 ORF 1":
                 self.country = "at"
                 self.init()
+                self.teletext.stationid = "orf1"
                 self.home()
-            case "🇩🇪 Germany":
+            case "🇦🇹 ORF 2":
+                self.country = "at"
+                self.init()
+                self.teletext.stationid = "orf2"
+                self.home()
+            case "🇦🇹 ORF III":
+                self.country = "at"
+                self.init()
+                self.teletext.stationid = "orfiii"
+                self.home()
+            case "🇦🇹 ORF Sport Plus":
+                self.country = "at"
+                self.init()
+                self.teletext.stationid = "sportplus"
+                self.home()
+            case "🇦🇹 SAT.1":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "s1at"
+                self.home()
+            case "🇦🇹 ProSieben":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "p7at"
+                self.home()
+            case "🇦🇹 kabel eins":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "k1at"
+                self.home()
+            case "🇦🇹 sixx":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "sixxat"
+                self.home()
+            case "🇦🇹 SAT.1 Gold":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "s1goldat"
+                self.home()
+            case "🇦🇹 ProSieben MAXX":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "p7maxxat"
+                self.home()
+            case "🇦🇹 kabel eins Doku":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "k1dokuat"
+                self.home()
+            case "🇩🇪 ZDF":
                 self.country = "de"
                 self.init()
+                self.teletext.stationid = "zdf"
                 self.home()
-            case "🇮🇹 Italy (slow)":
+            case "🇩🇪 ZDFneo":
+                self.country = "de"
+                self.init()
+                self.teletext.stationid = "zdfneo"
+                self.home()
+            case "🇩🇪 ZDFinfo":
+                self.country = "de"
+                self.init()
+                self.teletext.stationid = "zdfinfo"
+                self.home()
+            case "🇩🇪 3sat":
+                self.country = "de"
+                self.init()
+                self.teletext.stationid = "3sat"
+                self.home()
+            case "🇩🇪 ARD":
+                self.country = "other2"
+                self.init()
+                self.teletext.stationid = "br-alpha"
+                self.home()
+            case "🇩🇪 Arte":
+                self.country = "other2"
+                self.init()
+                self.teletext.stationid = "DE_arte"
+                self.home()
+            case "🇩🇪 KiKa":
+                self.country = "kika"
+                self.init()
+                self.home()
+            case "🇩🇪 SAT.1":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "s1de"
+                self.home()
+            case "🇩🇪 ProSieben":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "p7de"
+                self.home()
+            case "🇩🇪 kabel eins":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "k1de"
+                self.home()
+            case "🇩🇪 sixx":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "sixx"
+                self.home()
+            case "🇩🇪 SAT.1 Gold":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "s1gold"
+                self.home()
+            case "🇩🇪 ProSieben MAXX":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "p7maxx"
+                self.home()
+            case "🇩🇪 kabel eins Doku":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "k1doku"
+                self.home()
+            case "🇮🇹 Rai (slow)":
                 self.country = "it"
                 self.init()
                 self.home()
-            case "🇸🇪 Sweden":
+            case "🇸🇪 SVT":
                 self.country = "se"
                 self.init()
                 self.home()
-            case "🇨🇭 Switzerland":
+            case "🇨🇭 SRF 1":
                 self.country = "ch"
                 self.init()
+                self.teletext.stationid = "srf1"
                 self.home()
-            case "🇨🇿 Czechia":
+            case "🇨🇭 SRF zwei":
+                self.country = "ch"
+                self.init()
+                self.teletext.stationid = "srfzwei"
+                self.home()
+            case "🇨🇭 SRF Info":
+                self.country = "ch"
+                self.init()
+                self.teletext.stationid = "srfinfo"
+                self.home()
+            case "🇨🇭 RTS 1":
+                self.country = "ch"
+                self.init()
+                self.teletext.stationid = "rtsun"
+                self.home()
+            case "🇨🇭 RTS 2":
+                self.country = "ch"
+                self.init()
+                self.teletext.stationid = "rtsdeux"
+                self.home()
+            case "🇨🇭 RSI LA 1":
+                self.country = "ch"
+                self.init()
+                self.teletext.stationid = "rsila1"
+                self.home()
+            case "🇨🇭 RSI LA 2":
+                self.country = "ch"
+                self.init()
+                self.teletext.stationid = "rsila2"
+                self.home()
+            case "🇨🇭 SAT.1":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "s1ch"
+                self.home()
+            case "🇨🇭 ProSieben":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "p7ch"
+                self.home()
+            case "🇨🇭 kabel eins":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "k1ch"
+                self.home()
+            case "🇨🇭 sixx":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "sixxch"
+                self.home()
+            case "🇨🇭 SAT.1 Gold":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "s1goldch"
+                self.home()
+            case "🇨🇭 ProSieben MAXX":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "p7maxxch"
+                self.home()
+            case "🇨🇭 Puls8":
+                self.country = "other"
+                self.init()
+                self.teletext.stationid = "puls8ch"
+                self.home()
+            case "🇨🇿 ČT":
                 self.country = "cz"
                 self.init()
                 self.home()
-            case "🇫🇮 Finland":
+            case "🇫🇮 Yle":
                 self.country = "fi"
                 self.init()
                 self.home()
-            case "🇧🇺 Other":
-                self.country = "other"
+            case "🇩🇰 DR":
+                self.country = "dk"
                 self.init()
                 self.home()
     
@@ -746,6 +1109,12 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = fiTeletextReader()
             case "other":
                 self.teletext = otherTeletextReader()
+            case "dk":
+                self.teletext = dkTeletextReader()
+            case "other2":
+                self.teletext = other2TeletextReader()
+            case "kika":
+                self.teletext = kikaTeletextReader()
 
     def stationSwitcher(self, *args, **kwargs):
         if self.teletext.stationid != self.stations[self.togglegroup.get_active()].replace(" ", ""):
