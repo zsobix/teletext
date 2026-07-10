@@ -143,7 +143,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.window.set_show_content(True)
 
         self.scrollsidebar = Gtk.ScrolledWindow()
-        self.scrollsidebar.set_min_content_width(250)
+        self.scrollsidebar.set_min_content_width(280)
         self.sidebar.set_child(self.scrollsidebar)
 
         self.sidebox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
@@ -380,46 +380,46 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.buttonsbox.append(nextsubbutton)
         self.buttonsbox.append(nextbutton)
-        match self.country:
-            case "hu":
-                self.stations = ["mtva"]
-            case "at":
-                self.stations = ["orf 1", "orf 2", "orf iii", "sport plus"]
-            case "de":
-                self.stations = ["zdf", "zdf neo", "zdf info", "3sat"]
-            case "it":
-                self.stations = ["rai"]
-            case "se":
-                self.stations = ["svt"]
-            case "ch":
-                self.stations = ["SRF 1", "SRF zwei", "SRF Info", "RTS Un", "RTS Deux", "RSI LA 1", "RSI LA 2"]
-            case "cz":
-                self.stations = ["ČT"]
-            case "fi":
-                self.stations = ["yle"]
-            case "dk":
-                self.stations = ["dr"]
-            case "other2":
-                self.stations = ["br-alpha", "DE_arte"]
-            case "kika":
-                self.stations = ["kika"]
-        if self.country != "other":
-            self.togglegroup = Adw.ToggleGroup()
-            self.togglegroup.set_css_classes(["round", "togglegroup"])
-            try:
-                if self.station not in self.stations:
-                    raise Exception
-            except:
-                self.station = self.stations[0]
-            for station in self.stations:
-                toggle = Adw.Toggle()
-                label = Gtk.Label()
-                label.set_markup(f'<span>{station.upper()}</span>')
-                toggle.set_child(label)
-                self.togglegroup.set_active(self.stations.index(self.station))
-                self.togglegroup.add(toggle)
-            self.togglegroup.connect('notify::active', self.stationSwitcher)
-            self.inputbox.append(self.togglegroup)
+        # match self.country:
+        #     case "hu":
+        #         self.stations = ["mtva"]
+        #     case "at":
+        #         self.stations = ["orf 1", "orf 2", "orf iii", "sport plus"]
+        #     case "de":
+        #         self.stations = ["zdf", "zdf neo", "zdf info", "3sat"]
+        #     case "it":
+        #         self.stations = ["rai"]
+        #     case "se":
+        #         self.stations = ["svt"]
+        #     case "ch":
+        #         self.stations = ["SRF 1", "SRF zwei", "SRF Info", "RTS Un", "RTS Deux", "RSI LA 1", "RSI LA 2"]
+        #     case "cz":
+        #         self.stations = ["ČT"]
+        #     case "fi":
+        #         self.stations = ["yle"]
+        #     case "dk":
+        #         self.stations = ["dr"]
+        #     case "other2":
+        #         self.stations = ["br-alpha", "DE_arte"]
+        #     case "kika":
+        #         self.stations = ["kika"]
+        # if self.country != "other":
+        #     self.togglegroup = Adw.ToggleGroup()
+        #     self.togglegroup.set_css_classes(["round", "togglegroup"])
+        #     try:
+        #         if self.station not in self.stations:
+        #             raise Exception
+        #     except:
+        #         self.station = self.stations[0]
+        #     for station in self.stations:
+        #         toggle = Adw.Toggle()
+        #         label = Gtk.Label()
+        #         label.set_markup(f'<span>{station.upper()}</span>')
+        #         toggle.set_child(label)
+        #         self.togglegroup.set_active(self.stations.index(self.station))
+        #         self.togglegroup.add(toggle)
+        #     self.togglegroup.connect('notify::active', self.stationSwitcher)
+        #     self.inputbox.append(self.togglegroup)
 
         if self.country == "it":
             label = Gtk.Label()
@@ -437,22 +437,22 @@ class MainWindow(Gtk.ApplicationWindow):
             self.regions.set_selected(regionlist.find(self.teletext.region))
             self.regions.connect('notify::selected-item', self.regionSwitcher)
             self.inputbox.append(self.regions)
-        if self.country == "other":
-            label = Gtk.Label()
-            label.set_markup('<span>Stations</span>')
-            label.set_css_classes(["label"])
-            self.inputbox.append(label)
+        # if self.country == "other":
+        #     label = Gtk.Label()
+        #     label.set_markup('<span>Stations</span>')
+        #     label.set_css_classes(["label"])
+        #     self.inputbox.append(label)
             
-            self.stationdd = Gtk.DropDown()
-            self.stationdd.set_css_classes(["region"])
-            self.stationdd.set_enable_search(True)
-            stationlist = Gtk.StringList()
-            for station in self.teletext.stations:
-                stationlist.append(station)
-            self.stationdd.props.model = stationlist
-            self.stationdd.set_selected(self.teletext.stationsid.index(self.teletext.stationid))
-            self.stationdd.connect('notify::selected-item', self.otherstationSwitcher)
-            self.inputbox.append(self.stationdd)
+        #     self.stationdd = Gtk.DropDown()
+        #     self.stationdd.set_css_classes(["region"])
+        #     self.stationdd.set_enable_search(True)
+        #     stationlist = Gtk.StringList()
+        #     for station in self.teletext.stations:
+        #         stationlist.append(station)
+        #     self.stationdd.props.model = stationlist
+        #     self.stationdd.set_selected(self.teletext.stationsid.index(self.teletext.stationid))
+        #     self.stationdd.connect('notify::selected-item', self.otherstationSwitcher)
+        #     self.inputbox.append(self.stationdd)
         
 
     def pagenumEntry(self, *args, **kwargs):
