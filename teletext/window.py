@@ -127,6 +127,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = other2TeletextReader()
             case "kika":
                 self.teletext = kikaTeletextReader()
+            case "es":
+                self.teletext = esTeletextReader()
         
         self.window = Adw.NavigationSplitView()
         self.set_child(self.window)
@@ -176,6 +178,8 @@ class MainWindow(Gtk.ApplicationWindow):
                     "🇩🇪 SAT.1 Gold",
                     "🇩🇪 ProSieben MAXX",
                     "🇩🇪 kabel eins Doku",
+                    "🇩🇪 RBB",
+                    "🇩🇪 MDR",
                     "🇮🇹 Rai (slow)",
                     "🇸🇪 SVT",
                     "🇨🇭 SRF 1",
@@ -194,7 +198,8 @@ class MainWindow(Gtk.ApplicationWindow):
                     "🇨🇭 Puls8",
                     "🇨🇿 ČT",
                     "🇫🇮 Yle",
-                    "🇩🇰 DR"]
+                    "🇩🇰 DR",
+                    "🇪🇸 TVE"]
         
         for country in countries:
             button = Gtk.Button()
@@ -301,6 +306,13 @@ class MainWindow(Gtk.ApplicationWindow):
                 image.set_css_classes(["image"])
                 self.ccbox.append(image)
             case "kika":
+                img = Gio.File.new_for_uri(self.teletext.getPageGif)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
+            case "es":
                 img = Gio.File.new_for_uri(self.teletext.getPageGif)
                 img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
                 image = Gtk.Image().new_from_pixbuf(img2)
@@ -590,6 +602,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "es":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def prevPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -710,6 +732,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "es":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def nextsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -775,6 +807,11 @@ class MainWindow(Gtk.ApplicationWindow):
                 if nextsubpage <= self.teletext.subpages:
                     self.teletext.subpage = f"{nextsubpage:02d}"
                     self.home()
+            case "es":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
     def prevsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -836,6 +873,11 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.subpage = f"{prevsubpage:02d}"
                     self.home()
             case "kika":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "es":
                 prevsubpage = int(self.teletext.subpage)-1
                 if prevsubpage >= 1:
                     self.teletext.subpage = f"{prevsubpage:02d}"
@@ -998,6 +1040,16 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.init()
                 self.teletext.stationid = "k1doku"
                 self.home()
+            case "🇩🇪 RBB":
+                self.country = "other2"
+                self.init()
+                self.teletext.stationid = "rbb"
+                self.home()
+            case "🇩🇪 MDR":
+                self.country = "other2"
+                self.init()
+                self.teletext.stationid = "mdr-sachsen"
+                self.home()
             case "🇮🇹 Rai (slow)":
                 self.country = "it"
                 self.init()
@@ -1088,6 +1140,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.country = "dk"
                 self.init()
                 self.home()
+            case "🇪🇸 TVE":
+                self.country = "es"
+                self.init()
+                self.home()
     
     def init(self, *args, **kwargs):
         match self.country:
@@ -1115,6 +1171,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = other2TeletextReader()
             case "kika":
                 self.teletext = kikaTeletextReader()
+            case "es":
+                self.teletext = esTeletextReader()
 
     def stationSwitcher(self, *args, **kwargs):
         if self.teletext.stationid != self.stations[self.togglegroup.get_active()].replace(" ", ""):

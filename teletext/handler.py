@@ -883,7 +883,7 @@ class kikaTeletextReader:
     @property
     def subpages(self):
         try:
-            value = len(self.soup.find("div", {"class": "SUBPGLIST"}).find_all('a'))+1
+            value = len(self.soup.find_all("div", {"class": "SUBPGLIST"})[0].find_all('a'))+1
             return value
         except:
             return 1
@@ -891,6 +891,77 @@ class kikaTeletextReader:
     def checkpageNum(self, pageNum):
         try:
             url = f"https://www.kika.de/kikatextpages/{pageNum}_0001.png"
+
+            rq = requests.get(url).status_code
+
+            if rq == 302 or rq == 404:
+                return False
+            else:
+                return True
+        except:
+            return False
+
+class esTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "tve"
+        self.getPage()
+        
+    def getPage(self):
+        url = f"https://www.rtve.es/tve/teletexto/100/{self.pagenum}_00{int(self.subpage):02d}.htm"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+    @property
+    def getPageGif(self):
+        try:
+            value = f"https://img.rtve.es/tve/teletexto/100/{self.pagenum}_00{int(self.subpage):02d}.png"
+            return value
+        except:
+            value = "https://img.rtve.es/tve/teletexto/100/100_0001.png"
+            return value
+    
+    @property
+    def prevPage(self):
+        value = int(self.pagenum)-1
+
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
+
+    @property
+    def nextPage(self):
+        value = int(self.pagenum)+1
+
+        while True:
+            if int(value) > 900:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
+
+    @property
+    def subpages(self):
+        try:
+            if int(self.subpage) > 1:
+                value = len(self.soup.find_all("span", {"class": "LB"})[0].find_all('a'))-1
+            else:
+                value = len(self.soup.find_all("span", {"class": "LB"})[0].find_all('a'))
+                if value == 0:
+                    return 1
+            return value
+        except:
+            return 1
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://img.rtve.es/tve/teletexto/100/{pageNum}_0001.png"
 
             rq = requests.get(url).status_code
 
