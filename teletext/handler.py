@@ -6,6 +6,7 @@ import json
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import base64
+import re
 
 class hunTeletextReader:
     def __init__(self):
@@ -966,6 +967,145 @@ class esTeletextReader:
             rq = requests.get(url).status_code
 
             if rq == 302 or rq == 404:
+                return False
+            else:
+                return True
+        except:
+            return False
+
+class plTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "TG1"
+        self.getPage()
+    
+    def getPage(self):
+        url = f"https://www.telegazeta.pl/sync/ncexp/{self.stationid}/status.json"
+
+        rq = requests.get(url)
+
+        self.json = json.loads(rq.text)
+    
+    @property
+    def getPageGif(self):
+        try:
+            value = f"https://www.telegazeta.pl/sync/ncexp/{self.stationid}/100/{self.pagenum}_00{int(self.subpage):02d}.png"
+            return value
+        except:
+            value = f"https://www.telegazeta.pl/sync/ncexp/{self.stationid}/100/100_0001.png"
+    
+    @property
+    def prevPage(self):
+        value = self.json["teletext"]["pages"]
+        prev = int(self.pagenum)-1
+        while True:
+            if prev < 100:
+                return None
+            try:
+                if int(value[f"p{prev}"]["page"]["subpagecount"]) != 0:
+                    return prev
+            except:
+                return None
+            prev = int(prev)-1
+    
+    @property
+    def nextPage(self):
+        value = self.json["teletext"]["pages"]
+        nextpg = int(self.pagenum)+1
+        while True:
+            if nextpg > 900:
+                return None
+            try:
+                if int(value[f"p{nextpg}"]["page"]["subpagecount"]) != 0:
+                    return nextpg
+            except:
+                return None
+            nextpg = int(nextpg)+1
+    
+    @property
+    def subpages(self):
+        value = int(self.json["teletext"]["pages"][f"p{self.pagenum}"]["page"]["subpagecount"])
+        return value
+    
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://www.telegazeta.pl/sync/ncexp/{self.stationid}/100/{pageNum}_0001.png"
+
+            rq = requests.get(url).status_code
+
+            if rq == 302 or rq == 404:
+                return False
+            else:
+                return True
+        except:
+            return False
+
+class baTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "bhrt"
+        self.getPage()
+
+    def getPage(self):
+        url = f"https://teletext.bhrt.ba/100/{self.pagenum}_00{int(self.subpage):02d}.htm"
+
+        rq = requests.get(url)
+
+        self.soup = BeautifulSoup(rq.text, 'html.parser')
+
+    @property
+    def getPageGif(self):
+        try:
+            value = f"https://teletext.bhrt.ba/100/{self.pagenum}_00{int(self.subpage):02d}.png"
+            return value
+        except:
+            value = "https://teletext.bhrt.ba/100/100_0001.png"
+            return value
+
+    @property
+    def prevPage(self):
+        value = int(self.pagenum)-1
+
+        while True:
+            if int(value) < 100:
+                return 100
+            if self.checkpageNum(value):
+                return value
+            value = int(value)-1
+
+    @property
+    def nextPage(self):
+        value = int(self.pagenum)+1
+
+        while True:
+            if int(value) > 900:
+                return None
+            if self.checkpageNum(value):
+                return value
+            value = int(value)+1
+
+    @property
+    def subpages(self):
+        page = self.soup.find_all('p', {"class": "LB"})[0].find_all('a')
+
+        subpages = 1
+        for a in page:
+            try:
+                int(a.string)
+                subpages = int(subpages)+1
+            except:
+                pass
+        return subpages
+
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://teletext.bhrt.ba/100/{pageNum}_0001.png"
+
+            rq = requests.get(url).status_code
+
+            if rq == 404 or rq == 302:
                 return False
             else:
                 return True
