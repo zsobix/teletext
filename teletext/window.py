@@ -100,7 +100,21 @@ class MainWindow(Gtk.ApplicationWindow):
         collapse.connect("clicked", self.collapse)
         collapse.set_icon_name("sidebar-show-symbolic")
 
+        info = Gtk.Button()
+        info.connect("clicked", self.aboutDialog)
+        self.dialog = Adw.AboutDialog()
+        self.dialog.set_application_icon('xyz.zsobix.teletext')
+        self.dialog.set_application_name('TeleReader')
+        self.dialog.set_developer_name('zsobix')
+        self.dialog.set_license_type(Gtk.License.GPL_3_0)
+        self.dialog.set_website('https://zsobix.xyz')
+        self.dialog.add_acknowledgement_section('', ['Hack Club (for hosting Stardance) https://hackclub.com'])
+        info.set_icon_name("help-about-symbolic")
+
+        favourites = Gtk.Button()
+
         self.titlebar.pack_start(collapse)
+        self.titlebar.pack_end(info)
 
         match self.country:
             case "hu":
@@ -133,6 +147,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = plTeletextReader()
             case "ba":
                 self.teletext = baTeletextReader()
+            case "nl":
+                self.teletext = nlTeletextReader()
         
         self.window = Adw.NavigationSplitView()
         self.set_child(self.window)
@@ -206,7 +222,8 @@ class MainWindow(Gtk.ApplicationWindow):
                     "🇪🇸 TVE",
                     "🇵🇱 TVP 1",
                     "🇵🇱 TVP 2",
-                    "🇧🇦 BHRT"]
+                    "🇧🇦 BHRT",
+                    "🇳🇱 NOS"]
         
         for country in countries:
             button = Gtk.Button()
@@ -216,7 +233,6 @@ class MainWindow(Gtk.ApplicationWindow):
             button.set_child(buttitle)
             button.set_css_classes(["countrybutton"])
             self.sidebox.append(button)
-
         self.home()
 
     def home(self, *args, **kwargs):
@@ -340,6 +356,18 @@ class MainWindow(Gtk.ApplicationWindow):
                 image.set_pixel_size(520)
                 image.set_css_classes(["image"])
                 self.ccbox.append(image)
+            case "nl":
+                scroll = Gtk.ScrolledWindow()
+                scroll.set_min_content_height(500)
+                scroll.set_min_content_width(450)
+                scroll.set_overlay_scrolling(False)
+                self.ccbox.append(scroll)
+                self.view = WebKit.WebView().new()
+
+                self.teletext.writetempHTML()
+
+                self.view.load_uri(f"file:///tmp/index.html")
+                scroll.set_child(self.view)
         if self.country == "hu":
             #buttons
             self.colorbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -653,6 +681,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "nl":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def prevPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -803,6 +841,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "nl":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def nextsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -883,6 +931,11 @@ class MainWindow(Gtk.ApplicationWindow):
                 if nextsubpage <= self.teletext.subpages:
                     self.teletext.subpage = f"{nextsubpage:02d}"
                     self.home()
+            case "nl":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
     def prevsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -959,6 +1012,11 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.subpage = f"{prevsubpage:02d}"
                     self.home()
             case "ba":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "nl":
                 prevsubpage = int(self.teletext.subpage)-1
                 if prevsubpage >= 1:
                     self.teletext.subpage = f"{prevsubpage:02d}"
@@ -1239,6 +1297,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.country = "ba"
                 self.init()
                 self.home()
+            case "🇳🇱 NOS":
+                self.country = "nl"
+                self.init()
+                self.home()
     
     def init(self, *args, **kwargs):
         match self.country:
@@ -1272,6 +1334,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = plTeletextReader()
             case "ba":
                 self.teletext = baTeletextReader()
+            case "nl":
+                self.teletext = nlTeletextReader()
 
     def stationSwitcher(self, *args, **kwargs):
         if self.teletext.stationid != self.stations[self.togglegroup.get_active()].replace(" ", ""):
@@ -1305,6 +1369,10 @@ class MainWindow(Gtk.ApplicationWindow):
             self.teletext.subpage = "01"
             self.teletext.pagenum = "100"
             self.home()
+    
+    def aboutDialog(self, *args, **kwargs):
+        self.dialog.present()
+
 
 class MyApp(Adw.Application):
     def __init__(self, **kwargs):
