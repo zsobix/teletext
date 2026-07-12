@@ -1,8 +1,9 @@
-# Teletext on Desktop
+# TeleReader
 
 A desktop UI for some Teletext services, written in Python using GTK and libadwaita.
 
-<img width="811" height="792" alt="260706_19h53m10s_screenshot" src="https://github.com/user-attachments/assets/f24516f1-798d-47a4-b676-a5b628e0eb52" />
+<img width="861" height="758" alt="260713_00h08m21s_screenshot" src="https://github.com/user-attachments/assets/10bb5703-ca7d-47a2-89f2-992a8a0cf608" />
+
 
 ## Installation
 > This only works on macOS/Linux, because I can't package on Windows, and GTK doesn't work as well there
