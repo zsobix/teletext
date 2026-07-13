@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="teletext",
-    version="0.0.8",
+    version="0.0.9",
     author="Zsombor Kalmar",
     description="Desktop version of some Teletext services.",
     long_description=long_description,

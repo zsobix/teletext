@@ -6,7 +6,6 @@ import json
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
 import base64
-import re
 
 class hunTeletextReader:
     def __init__(self):
@@ -1502,6 +1501,90 @@ class nlTeletextReader:
             son = json.loads(rq.text)
 
             value = self.json["content"]
+            return True
+        except:
+            return False
+
+class hrTeletextReader:
+    def __init__(self, *args, **kwargs):
+        self.pagenum = "100"
+        self.subpage = "01"
+        self.stationid = "hrt"
+        self.getPage()
+    
+    def getPage(self):
+        url = f"https://teletekst.hrt.hr/api/getNewPage?pageNum={self.pagenum}-{self.subpage}.HTML"
+
+        rq = requests.get(url)
+
+        self.json = json.loads(rq.text)
+
+    @property
+    def getPageGif(self):
+        try:
+            value = self.json["ttxImg"].replace("data:image/gif;base64,", "")
+            return base64.b64decode(value)
+        except:
+            pagenum = self.pagenum
+            subpage = self.subpage
+            self.pagenum = "100"
+            self.subpage = "01"
+            self.getPage()
+            value = self.json["ttxImg"].replace("data:image/gif;base64,", "")
+            self.pagenum = pagenum
+            self.subpage = subpage
+            self.getPage()
+            return base64.b64decode(value)
+    
+    @property
+    def prevPage(self):
+        try:
+            value = self.json["documentJson"]["DOCUMENT"]["PREV_PAGEREF"]["_attributes"]["value"].split("-")[0]
+            return int(value)
+        except:
+            return None
+    
+    @property
+    def nextPage(self):
+        try:
+            value = self.json["documentJson"]["DOCUMENT"]["NEXT_PAGEREF"]["_attributes"]["value"].split("-")[0]
+            return int(value)
+        except:
+            return None
+
+    @property
+    def subpages(self):
+        value = int(self.subpage)
+
+        while True:
+            if int(value) > 50:
+                return 1
+            if not self.checksubpageNum(value):
+                return int(value)-1
+            value = int(value)+1
+
+    def checkpageNum(self, pageNum):
+        try:
+            url = f"https://teletekst.hrt.hr/api/getNewPage?pageNum={pageNum}-01.HTML"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+
+            value = self.json["ttxImg"]
+            return True
+        except:
+            return False
+
+    def checksubpageNum(self, subpageNum):
+        try:
+            url = f"https://teletekst.hrt.hr/api/getNewPage?pageNum={self.pagenum}-{subpageNum:02d}.HTML"
+
+            rq = requests.get(url)
+
+            son = json.loads(rq.text)
+
+            value = self.json["ttxImg"]
             return True
         except:
             return False

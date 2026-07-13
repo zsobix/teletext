@@ -82,6 +82,23 @@ css_provider.load_from_string("""
 .togglegroup {
     margin: 10px;
 }
+.favouritesbox {
+    margin: 20px;
+    border-color: white;
+    border-style: dashed;
+    border-width: 3px;
+    border-radius: 15px;
+}
+.favourites {
+    margin: 20px;
+    padding: 10px;
+    border-radius: 10px;
+    background-color: #38383E;
+}
+.favlabel {
+    margin-left: 15px;
+    margin-right: 15px;
+}
 """)
 Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
@@ -100,6 +117,10 @@ class MainWindow(Gtk.ApplicationWindow):
         collapse.connect("clicked", self.collapse)
         collapse.set_icon_name("sidebar-show-symbolic")
 
+        home = Gtk.Button()
+        home.connect("clicked", self.home)
+        home.set_icon_name("go-home-symbolic")
+
         info = Gtk.Button()
         info.connect("clicked", self.aboutDialog)
         self.dialog = Adw.AboutDialog()
@@ -112,9 +133,19 @@ class MainWindow(Gtk.ApplicationWindow):
         info.set_icon_name("help-about-symbolic")
 
         favourites = Gtk.Button()
+        favourites.connect("clicked", self.favouritesPage)
+        favourites.set_icon_name("starred-symbolic")
+        self.favourites = [["768", "🇳🇱 NOS"]]
+        
+        fav_add = Gtk.Button()
+        fav_add.set_icon_name("star-new-symbolic")
 
         self.titlebar.pack_start(collapse)
+        self.titlebar.pack_start(home)
+
         self.titlebar.pack_end(info)
+        self.titlebar.pack_end(favourites)
+        self.titlebar.pack_end(fav_add)
 
         match self.country:
             case "hu":
@@ -149,6 +180,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = baTeletextReader()
             case "nl":
                 self.teletext = nlTeletextReader()
+            case "hr":
+                self.teletext = hrTeletextReader()
         
         self.window = Adw.NavigationSplitView()
         self.set_child(self.window)
@@ -223,7 +256,8 @@ class MainWindow(Gtk.ApplicationWindow):
                     "🇵🇱 TVP 1",
                     "🇵🇱 TVP 2",
                     "🇧🇦 BHRT",
-                    "🇳🇱 NOS"]
+                    "🇳🇱 NOS",
+                    "🇭🇷 HRT"]
         
         for country in countries:
             button = Gtk.Button()
@@ -368,6 +402,14 @@ class MainWindow(Gtk.ApplicationWindow):
 
                 self.view.load_uri(f"file:///tmp/index.html")
                 scroll.set_child(self.view)
+            case "hr":
+                raw = GLib.Bytes(self.teletext.getPageGif)
+                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
+                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
+                image = Gtk.Image().new_from_pixbuf(img2)
+                image.set_pixel_size(520)
+                image.set_css_classes(["image"])
+                self.ccbox.append(image)
         if self.country == "hu":
             #buttons
             self.colorbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
@@ -691,6 +733,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "hr":
+                try:
+                    if self.teletext.nextPage != None:
+                        self.teletext.pagenum = self.teletext.nextPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def prevPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -851,6 +903,16 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.pagenum = "100"
                     self.teletext.subpage = "01"
                 self.home()
+            case "hr":
+                try:
+                    if self.teletext.prevPage != None:
+                        self.teletext.pagenum = self.teletext.prevPage
+                        self.teletext.subpage = "01"
+                        self.teletext.getPage()
+                except:
+                    self.teletext.pagenum = "100"
+                    self.teletext.subpage = "01"
+                self.home()
     def nextsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -936,6 +998,11 @@ class MainWindow(Gtk.ApplicationWindow):
                 if nextsubpage <= self.teletext.subpages:
                     self.teletext.subpage = f"{nextsubpage:02d}"
                     self.home()
+            case "hr":
+                nextsubpage = int(self.teletext.subpage)+1
+                if nextsubpage <= self.teletext.subpages:
+                    self.teletext.subpage = f"{nextsubpage:02d}"
+                    self.home()
     def prevsubPage(self, *args, **kwargs):
         match self.country:
             case "hu":
@@ -1017,6 +1084,11 @@ class MainWindow(Gtk.ApplicationWindow):
                     self.teletext.subpage = f"{prevsubpage:02d}"
                     self.home()
             case "nl":
+                prevsubpage = int(self.teletext.subpage)-1
+                if prevsubpage >= 1:
+                    self.teletext.subpage = f"{prevsubpage:02d}"
+                    self.home()
+            case "hr":
                 prevsubpage = int(self.teletext.subpage)-1
                 if prevsubpage >= 1:
                     self.teletext.subpage = f"{prevsubpage:02d}"
@@ -1301,6 +1373,10 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.country = "nl"
                 self.init()
                 self.home()
+            case "🇭🇷 HRT":
+                self.country = "hr"
+                self.init()
+                self.home()
     
     def init(self, *args, **kwargs):
         match self.country:
@@ -1336,6 +1412,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = baTeletextReader()
             case "nl":
                 self.teletext = nlTeletextReader()
+            case "hr":
+                self.teletext = hrTeletextReader()
 
     def stationSwitcher(self, *args, **kwargs):
         if self.teletext.stationid != self.stations[self.togglegroup.get_active()].replace(" ", ""):
@@ -1373,6 +1451,48 @@ class MainWindow(Gtk.ApplicationWindow):
     def aboutDialog(self, *args, **kwargs):
         self.dialog.present()
 
+    def favouritesPage(self, *args, **kwargs):
+        mainbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
+        mainbox.set_css_classes(["favouritesbox"])
+
+        self.content.set_child(mainbox)
+
+        for favourite in self.favourites:
+            button = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            button.set_css_classes(["favourites"])
+
+            favbutton = Gtk.Button()
+
+            label = Gtk.Label()
+            label.set_css_classes(["favlabel"])
+            label.set_markup(f'<span>{favourite[0]}</span>')
+
+            favbutton.set_child(label)
+            favbutton.set_halign(Gtk.Align.START)
+            favbutton.connect('clicked', self.gotoFavourite)
+            button.append(favbutton)
+
+            endbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            endbox.set_halign(Gtk.Align.END)
+            button.append(endbox)
+
+            label = Gtk.Label()
+            label.set_css_classes(["favlabel"])
+            label.set_markup(f'<span>{favourite[1]}</span>')
+            endbox.append(label)
+
+            remove = Gtk.Button()
+            remove.set_icon_name('window-close-symbolic')
+            remove.connect('clicked', self.removeFavourite)
+            endbox.append(remove)
+
+            mainbox.append(button)
+
+    def removeFavourite(self, *args, **kwargs):
+        print(args)
+    
+    def gotoFavourite(self, *args, **kwargs):
+        print(args)
 
 class MyApp(Adw.Application):
     def __init__(self, **kwargs):
