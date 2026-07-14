@@ -6,7 +6,7 @@ A desktop UI for some Teletext services, written in Python using GTK and libadwa
 
 
 ## Installation
-> This only works on macOS/Linux, because I can't package on Windows, and GTK doesn't work as well there
+> This only works on Linux, because I can't package on Windows, and GTK doesn't work as well there
 
 ### Download from releases
 Just head to the releases and download the executable!
