@@ -35,3 +35,8 @@ there are bugs I probably didn't notice, so pls write in the issues tab!
  
 
 <img width="200" height="150" alt="Under_construction_graphic" src="https://github.com/user-attachments/assets/0f814f2d-37bc-446a-bf9b-7207ccdddbc5" />
+
+## Credits
+
+- myself for making this
+- [Hack Club](https://hackclub.com) for making [Stardance!](https://stardance.hackclub.com)
