@@ -135,9 +135,10 @@ class MainWindow(Gtk.ApplicationWindow):
         favourites = Gtk.Button()
         favourites.connect("clicked", self.favouritesPage)
         favourites.set_icon_name("starred-symbolic")
-        self.favourites = [["768", "🇳🇱 NOS"]]
+        self.favourites = []
         
         fav_add = Gtk.Button()
+        fav_add.connect('clicked', self.addFavorite)
         fav_add.set_icon_name("star-new-symbolic")
 
         self.titlebar.pack_start(collapse)
@@ -147,41 +148,7 @@ class MainWindow(Gtk.ApplicationWindow):
         self.titlebar.pack_end(favourites)
         self.titlebar.pack_end(fav_add)
 
-        match self.country:
-            case "hu":
-                self.teletext = hunTeletextReader()
-            case "at":
-                self.teletext = atTeletextReader()
-            case "de":
-                self.teletext = gerTeletextReader()
-            case "it":
-                self.teletext = itTeletextReader()
-            case "se":
-                self.teletext = seTeletextReader()
-            case "ch":
-                self.teletext = chTeletextReader()
-            case "cz":
-                self.teletext = czTeletextReader()
-            case "fi":
-                self.teletext = fiTeletextReader()
-            case "other":
-                self.teletext = otherTeletextReader()
-            case "dk":
-                self.teletext = dkTeletextReader()
-            case "other2":
-                self.teletext = other2TeletextReader()
-            case "kika":
-                self.teletext = kikaTeletextReader()
-            case "es":
-                self.teletext = esTeletextReader()
-            case "pl":
-                self.teletext = plTeletextReader()
-            case "ba":
-                self.teletext = baTeletextReader()
-            case "nl":
-                self.teletext = nlTeletextReader()
-            case "hr":
-                self.teletext = hrTeletextReader()
+        self.init()
         
         self.window = Adw.NavigationSplitView()
         self.set_child(self.window)
@@ -205,65 +172,66 @@ class MainWindow(Gtk.ApplicationWindow):
         self.scrollsidebar.set_child(self.sidebox)
 
         # TODO make this a scrolled window with all channels separated
-        countries = ["🇭🇺 MTVA",
-                    "🇦🇹 ORF 1",
-                    "🇦🇹 ORF 2",
-                    "🇦🇹 ORF III",
-                    "🇦🇹 ORF Sport Plus",
-                    "🇦🇹 SAT.1",
-                    "🇦🇹 ProSieben",
-                    "🇦🇹 kabel eins",
-                    "🇦🇹 sixx",
-                    "🇦🇹 SAT.1 Gold",
-                    "🇦🇹 ProSieben MAXX",
-                    "🇦🇹 kabel eins Doku",
-                    "🇩🇪 ZDF",
-                    "🇩🇪 ZDFneo",
-                    "🇩🇪 ZDFinfo",
-                    "🇩🇪 3sat",
-                    "🇩🇪 ARD",
-                    "🇩🇪 Arte",
-                    "🇩🇪 KiKa",
-                    "🇩🇪 SAT.1",
-                    "🇩🇪 ProSieben",
-                    "🇩🇪 kabel eins",
-                    "🇩🇪 sixx",
-                    "🇩🇪 SAT.1 Gold",
-                    "🇩🇪 ProSieben MAXX",
-                    "🇩🇪 kabel eins Doku",
-                    "🇩🇪 RBB",
-                    "🇩🇪 MDR",
-                    "🇮🇹 Rai (slow)",
-                    "🇸🇪 SVT",
-                    "🇨🇭 SRF 1",
-                    "🇨🇭 SRF zwei",
-                    "🇨🇭 SRF Info",
-                    "🇨🇭 RTS 1",
-                    "🇨🇭 RTS 2",
-                    "🇨🇭 RSI LA 1",
-                    "🇨🇭 RSI LA 2",
-                    "🇨🇭 SAT.1",
-                    "🇨🇭 ProSieben",
-                    "🇨🇭 kabel eins", 
-                    "🇨🇭 sixx",
-                    "🇨🇭 SAT.1 Gold",
-                    "🇨🇭 ProSieben MAXX",
-                    "🇨🇭 Puls8",
-                    "🇨🇿 ČT",
-                    "🇫🇮 Yle",
-                    "🇩🇰 DR",
-                    "🇪🇸 TVE",
-                    "🇵🇱 TVP 1",
-                    "🇵🇱 TVP 2",
-                    "🇧🇦 BHRT",
-                    "🇳🇱 NOS",
-                    "🇭🇷 HRT"]
+        self.countries = [["🇭🇺 MTVA", "hu", "mtva"],
+                    ["🇦🇹 ORF 1", "at", "orf1"],
+                    ["🇦🇹 ORF 2", "at", "orf2"],
+                    ["🇦🇹 ORF III", "at", "orfiii"],
+                    ["🇦🇹 ORF Sport Plus", "at", "sportplus"],
+                    ["🇦🇹 SAT.1", "other", "s1at"],
+                    ["🇦🇹 ProSieben", "other", "p7at"],
+                    ["🇦🇹 kabel eins", "other", "k1at"],
+                    ["🇦🇹 sixx", "other", "sixxat"],
+                    ["🇦🇹 SAT.1 Gold", "other", "s1goldat"],
+                    ["🇦🇹 ProSieben MAXX", "other", "p7maxxat"],
+                    ["🇦🇹 kabel eins Doku", "other", "k1dokuat"],
+                    ["🇩🇪 ZDF", "de", "zdf"],
+                    ["🇩🇪 ZDFneo", "de", "zdfneo"],
+                    ["🇩🇪 ZDFinfo", "de", "zdfinfo"],
+                    ["🇩🇪 3sat", "de", "3sat"],
+                    ["🇩🇪 ARD", "other2", "br-alpha"],
+                    ["🇩🇪 Arte", "other2", "DE_arte"],
+                    ["🇩🇪 KiKa", "kika", "kika"],
+                    ["🇩🇪 SAT.1", "other", "s1de"],
+                    ["🇩🇪 ProSieben", "other", "p7de"],
+                    ["🇩🇪 kabel eins", "other", "k1de"],
+                    ["🇩🇪 sixx", "other", "sixx"],
+                    ["🇩🇪 SAT.1 Gold", "other", "s1gold"],
+                    ["🇩🇪 ProSieben MAXX", "other", "p7maxx"],
+                    ["🇩🇪 kabel eins Doku", "other", "k1doku"],
+                    ["🇩🇪 RBB", "other2", "rbb"],
+                    ["🇩🇪 MDR", "other2", "mdr-sachsen"],
+                    ["🇮🇹 Rai (slow)", "it", "rai"],
+                    ["🇸🇪 SVT", "se", "svt"],
+                    ["🇨🇭 SRF 1", "ch", "srf1"],
+                    ["🇨🇭 SRF zwei", "ch", "srfzwei"],
+                    ["🇨🇭 SRF Info", "ch", "srfinfo"],
+                    ["🇨🇭 RTS 1", "ch", "rtsun"],
+                    ["🇨🇭 RTS 2", "ch", "rtsdeux"],
+                    ["🇨🇭 RSI LA 1", "ch", "rsila1"],
+                    ["🇨🇭 RSI LA 2", "ch", "rsila2"],
+                    ["🇨🇭 SAT.1", "other", "s1ch"],
+                    ["🇨🇭 ProSieben", "other", "p7ch"],
+                    ["🇨🇭 kabel eins",  "other", "k1ch"],
+                    ["🇨🇭 sixx", "other", "sixxch"],
+                    ["🇨🇭 SAT.1 Gold", "other", "s1goldch"],
+                    ["🇨🇭 ProSieben MAXX", "other", "p7maxxch"],
+                    ["🇨🇭 Puls8", "other", "puls8ch"],
+                    ["🇨🇿 ČT", "cz", "ČT"],
+                    ["🇫🇮 Yle", "fi", "yle"],
+                    ["🇩🇰 DR", "dk", "dr"],
+                    ["🇪🇸 TVE", "es", "tve"],
+                    ["🇵🇱 TVP 1", "pl", "TG1"],
+                    ["🇵🇱 TVP 2", "pl", "TG2"],
+                    ["🇧🇦 BHRT", "ba", "bhrt"],
+                    ["🇳🇱 NOS", "nl", "nos"],
+                    ["🇭🇷 HRT", "hr", "hrt"],
+                    ["🇽🇹 ???", "xx", "xx"]]
         
-        for country in countries:
+        for country in self.countries:
             button = Gtk.Button()
             button.connect('clicked', self.countrySelect)
             buttitle = Gtk.Label()
-            buttitle.set_markup(f'<span size="x-large">{country}</span>')
+            buttitle.set_markup(f'<span size="x-large">{country[0]}</span>')
             button.set_child(buttitle)
             button.set_css_classes(["countrybutton"])
             self.sidebox.append(button)
@@ -275,167 +243,48 @@ class MainWindow(Gtk.ApplicationWindow):
         self.ccbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.cbox.set_center_widget(self.ccbox)
         self.content.set_child(self.cbox)
-        match self.country:
-            case "hu":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                self.teletext.colorbuttonsInit()
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "at":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "it":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "de":
-                scroll = Gtk.ScrolledWindow()
-                scroll.set_min_content_height(500)
-                scroll.set_min_content_width(500)
-                scroll.set_overlay_scrolling(False)
-                self.ccbox.append(scroll)
-                self.view = WebKit.WebView().new()
-                if self.teletext.subpage == "1":
-                    self.view.load_uri(f"https://teletext.zdf.de/teletext/{self.teletext.stationid}/seiten/klassisch/{self.teletext.pagenum}.html")
-                else:
-                    self.view.load_uri(f"https://teletext.zdf.de/teletext/{self.teletext.stationid}/seiten/klassisch/{self.teletext.pagenum}_{int(self.teletext.subpage)-1}.html")
-                scroll.set_child(self.view)
-            case "se":
-                raw = GLib.Bytes(self.teletext.getPageGif)
-                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "ch":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "cz":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "fi":
-                raw = GLib.Bytes(self.teletext.getPageGif)
-                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "other":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "dk":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "other2":
-                raw = GLib.Bytes(self.teletext.getPageGif)
-                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "kika":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "es":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "pl":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "ba":
-                img = Gio.File.new_for_uri(self.teletext.getPageGif)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-            case "nl":
-                scroll = Gtk.ScrolledWindow()
-                scroll.set_min_content_height(500)
-                scroll.set_min_content_width(450)
-                scroll.set_overlay_scrolling(False)
-                self.ccbox.append(scroll)
-                self.view = WebKit.WebView().new()
-
-                self.teletext.writetempHTML()
-
-                self.view.load_uri(f"file:///tmp/index.html")
-                scroll.set_child(self.view)
-            case "hr":
-                raw = GLib.Bytes(self.teletext.getPageGif)
-                rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
-                img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
-                image = Gtk.Image().new_from_pixbuf(img2)
-                image.set_pixel_size(520)
-                image.set_css_classes(["image"])
-                self.ccbox.append(image)
-        if self.country == "hu":
-            #buttons
-            self.colorbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
-
-            redbutton = Gtk.Button()
-            redbutton.set_css_classes(["redbutton"])
-            redbutton.connect('clicked', self.redbuttonHandler)
-            self.colorbox.append(redbutton)
-
-            greenbutton = Gtk.Button()
-            greenbutton.set_css_classes(["greenbutton"])
-            greenbutton.connect('clicked', self.greenbuttonHandler)
-            self.colorbox.append(greenbutton)
-
-            yellowbutton = Gtk.Button()
-            yellowbutton.set_css_classes(["yellowbutton"])
-            yellowbutton.connect('clicked', self.yellowbuttonHandler)
-            self.colorbox.append(yellowbutton)
-
-            bluebutton = Gtk.Button()
-            bluebutton.set_css_classes(["bluebutton"])
-            bluebutton.connect('clicked', self.bluebuttonHandler)
-            self.colorbox.append(bluebutton)
-
-            self.ccbox.append(self.colorbox)
-        
+        b64 = ["se",
+                "fi",
+                "hr",
+                "other2",
+                "xx"]
+        if self.country == "de":
+            scroll = Gtk.ScrolledWindow()
+            scroll.set_min_content_height(500)
+            scroll.set_min_content_width(500)
+            scroll.set_overlay_scrolling(False)
+            self.ccbox.append(scroll)
+            self.view = WebKit.WebView().new()
+            if int(self.teletext.subpage) == 1:
+                self.view.load_uri(f"https://teletext.zdf.de/teletext/{self.teletext.stationid}/seiten/klassisch/{self.teletext.pagenum}.html")
+            else:
+                self.view.load_uri(f"https://teletext.zdf.de/teletext/{self.teletext.stationid}/seiten/klassisch/{self.teletext.pagenum}_{int(self.teletext.subpage)-1}.html")
+            scroll.set_child(self.view)
+        elif self.country == "nl":
+            scroll = Gtk.ScrolledWindow()
+            scroll.set_min_content_height(500)
+            scroll.set_min_content_width(450)
+            scroll.set_overlay_scrolling(False)
+            self.ccbox.append(scroll)
+            self.view = WebKit.WebView().new()
+            self.teletext.writetempHTML()
+            self.view.load_uri(f"file:///tmp/index.html")
+            scroll.set_child(self.view)
+        elif self.country not in b64:
+            img = Gio.File.new_for_uri(self.teletext.getPageGif)
+            img2 = GdkPixbuf.Pixbuf.new_from_stream(img.read(cancellable=None))
+            image = Gtk.Image().new_from_pixbuf(img2)
+            image.set_pixel_size(520)
+            image.set_css_classes(["image"])
+            self.ccbox.append(image)
+        elif self.country in b64:
+            raw = GLib.Bytes(self.teletext.getPageGif)
+            rawstream = Gio.MemoryInputStream.new_from_bytes(raw)
+            img2 = GdkPixbuf.Pixbuf.new_from_stream(rawstream)
+            image = Gtk.Image().new_from_pixbuf(img2)
+            image.set_pixel_size(520)
+            image.set_css_classes(["image"])
+            self.ccbox.append(image)
 
         self.inputbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         self.inputbox.set_valign(Gtk.Align.CENTER)
@@ -483,47 +332,6 @@ class MainWindow(Gtk.ApplicationWindow):
 
         self.buttonsbox.append(nextsubbutton)
         self.buttonsbox.append(nextbutton)
-        # match self.country:
-        #     case "hu":
-        #         self.stations = ["mtva"]
-        #     case "at":
-        #         self.stations = ["orf 1", "orf 2", "orf iii", "sport plus"]
-        #     case "de":
-        #         self.stations = ["zdf", "zdf neo", "zdf info", "3sat"]
-        #     case "it":
-        #         self.stations = ["rai"]
-        #     case "se":
-        #         self.stations = ["svt"]
-        #     case "ch":
-        #         self.stations = ["SRF 1", "SRF zwei", "SRF Info", "RTS Un", "RTS Deux", "RSI LA 1", "RSI LA 2"]
-        #     case "cz":
-        #         self.stations = ["ČT"]
-        #     case "fi":
-        #         self.stations = ["yle"]
-        #     case "dk":
-        #         self.stations = ["dr"]
-        #     case "other2":
-        #         self.stations = ["br-alpha", "DE_arte"]
-        #     case "kika":
-        #         self.stations = ["kika"]
-        # if self.country != "other":
-        #     self.togglegroup = Adw.ToggleGroup()
-        #     self.togglegroup.set_css_classes(["round", "togglegroup"])
-        #     try:
-        #         if self.station not in self.stations:
-        #             raise Exception
-        #     except:
-        #         self.station = self.stations[0]
-        #     for station in self.stations:
-        #         toggle = Adw.Toggle()
-        #         label = Gtk.Label()
-        #         label.set_markup(f'<span>{station.upper()}</span>')
-        #         toggle.set_child(label)
-        #         self.togglegroup.set_active(self.stations.index(self.station))
-        #         self.togglegroup.add(toggle)
-        #     self.togglegroup.connect('notify::active', self.stationSwitcher)
-        #     self.inputbox.append(self.togglegroup)
-
         if self.country == "it":
             label = Gtk.Label()
             label.set_markup('<span>Regions</span>')
@@ -540,23 +348,6 @@ class MainWindow(Gtk.ApplicationWindow):
             self.regions.set_selected(regionlist.find(self.teletext.region))
             self.regions.connect('notify::selected-item', self.regionSwitcher)
             self.inputbox.append(self.regions)
-        # if self.country == "other":
-        #     label = Gtk.Label()
-        #     label.set_markup('<span>Stations</span>')
-        #     label.set_css_classes(["label"])
-        #     self.inputbox.append(label)
-            
-        #     self.stationdd = Gtk.DropDown()
-        #     self.stationdd.set_css_classes(["region"])
-        #     self.stationdd.set_enable_search(True)
-        #     stationlist = Gtk.StringList()
-        #     for station in self.teletext.stations:
-        #         stationlist.append(station)
-        #     self.stationdd.props.model = stationlist
-        #     self.stationdd.set_selected(self.teletext.stationsid.index(self.teletext.stationid))
-        #     self.stationdd.connect('notify::selected-item', self.otherstationSwitcher)
-        #     self.inputbox.append(self.stationdd)
-        
 
     def pagenumEntry(self, *args, **kwargs):
         buf = self.input.get_buffer()
@@ -574,544 +365,91 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.home()
     
     def nextPage(self, *args, **kwargs):
-        match self.country:
-            case "hu":
-                nextpage = self.teletext.nextPage
-                if nextpage == None:
-                    pass
-                else:
-                    self.teletext.pagenum = nextpage[0]
-                    self.teletext.subpage = nextpage[1]
-                    self.home()
-            case "at":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
+        if self.country == "hu":
+            nextpage = self.teletext.nextPage
+            if nextpage == None:
+                pass
+            else:
+                self.teletext.pagenum = nextpage[0]
+                self.teletext.subpage = nextpage[1]
                 self.home()
-            case "de":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
+        elif self.country == "de" or self.country == "it" or self.country == "se" or self.country == "ch":
+            try:
+                if self.teletext.nextPage != None:
+                    self.teletext.pagenum = self.teletext.nextPage
                     self.teletext.subpage = "1"
-                self.home()
-            case "it":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "1"
-                self.home()
-            case "se":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "1"
-                self.home()
-            case "ch":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "1"
-                self.home()
-            case "cz":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
+                    self.teletext.getPage()
+            except:
+                self.teletext.pagenum = "100"
+                self.teletext.subpage = "1"
+            self.home()
+        else:
+            try:
+                if self.teletext.nextPage != None:
+                    self.teletext.pagenum = self.teletext.nextPage
                     self.teletext.subpage = "01"
-                self.home()
-            case "fi":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "other":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "dk":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "other2":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "kika":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "es":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "pl":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "ba":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "nl":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "hr":
-                try:
-                    if self.teletext.nextPage != None:
-                        self.teletext.pagenum = self.teletext.nextPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
+                    self.teletext.getPage()
+            except:
+                self.teletext.pagenum = "100"
+                self.teletext.subpage = "01"
+            self.home()
     def prevPage(self, *args, **kwargs):
-        match self.country:
-            case "hu":
-                prevpage = self.teletext.prevPage
-                if prevpage == None:
-                    pass
-                else:
-                    self.teletext.pagenum = prevpage[0]
-                    self.teletext.subpage = prevpage[1]
-                    self.home()
-            case "at":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
+        if self.country == "hu":
+            prevpage = self.teletext.prevPage
+            if prevpage == None:
+                pass
+            else:
+                self.teletext.pagenum = prevpage[0]
+                self.teletext.subpage = prevpage[1]
                 self.home()
-            case "de":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
+        elif self.country == "de" or self.country == "it" or self.country == "se" or self.country == "ch":
+            try:
+                if self.teletext.prevPage != None:
+                    self.teletext.pagenum = self.teletext.prevPage
                     self.teletext.subpage = "1"
-                self.home()
-            case "it":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "1"
-                self.home()
-            case "se":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "1"
-                self.home()
-            case "ch":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "1"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "1"
-                self.home()
-            case "cz":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
+                    self.teletext.getPage()
+            except:
+                self.teletext.pagenum = "100"
+                self.teletext.subpage = "1"
+            self.home()
+        else:
+            try:
+                if self.teletext.prevPage != None:
+                    self.teletext.pagenum = self.teletext.prevPage
                     self.teletext.subpage = "01"
-                self.home()
-            case "fi":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "other":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "dk":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "other2":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "kika":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "es":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "pl":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "ba":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "nl":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
-            case "hr":
-                try:
-                    if self.teletext.prevPage != None:
-                        self.teletext.pagenum = self.teletext.prevPage
-                        self.teletext.subpage = "01"
-                        self.teletext.getPage()
-                except:
-                    self.teletext.pagenum = "100"
-                    self.teletext.subpage = "01"
-                self.home()
+                    self.teletext.getPage()
+            except:
+                self.teletext.pagenum = "100"
+                self.teletext.subpage = "01"
+            self.home()
     def nextsubPage(self, *args, **kwargs):
-        match self.country:
-            case "hu":
-                nextsubpage = self.teletext.nextSubpage
-                if nextsubpage == None:
-                    pass
-                else:
-                    self.teletext.pagenum = nextsubpage[0]
-                    self.teletext.subpage = nextsubpage[1]
-                    self.home()
-            case "at":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "de":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "it":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage}"
-                    self.home()
-            case "se":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "ch":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "cz":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "fi":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "other":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "dk":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "other2":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "kika":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "es":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "pl":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "ba":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "nl":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
-            case "hr":
-                nextsubpage = int(self.teletext.subpage)+1
-                if nextsubpage <= self.teletext.subpages:
-                    self.teletext.subpage = f"{nextsubpage:02d}"
-                    self.home()
+        if self.country == "hu":
+            nextsubpage = self.teletext.nextSubpage
+            if nextsubpage == None:
+                pass
+            else:
+                self.teletext.pagenum = nextsubpage[0]
+                self.teletext.subpage = nextsubpage[1]
+                self.home()
+        else:
+            nextsubpage = int(self.teletext.subpage)+1
+            if nextsubpage <= self.teletext.subpages:
+                self.teletext.subpage = f"{nextsubpage:02d}"
+                self.home()
     def prevsubPage(self, *args, **kwargs):
-        match self.country:
-            case "hu":
-                prevsubpage = self.teletext.prevSubpage
-                if prevsubpage == None:
-                    pass
-                else:
-                    self.teletext.pagenum = prevsubpage[0]
-                    self.teletext.subpage = prevsubpage[1]
-                    self.home()
-            case "at":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "de":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "it":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage}"
-                    self.home()
-            case "se":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "ch":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "cz":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "fi":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "other":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "dk":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "other2":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "kika":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "es":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "pl":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "ba":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "nl":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-            case "hr":
-                prevsubpage = int(self.teletext.subpage)-1
-                if prevsubpage >= 1:
-                    self.teletext.subpage = f"{prevsubpage:02d}"
-                    self.home()
-    def redbuttonHandler(self, *args, **kwargs):
-        self.teletext.pagenum = self.teletext.colorbuttons[0][0]
-        self.teletext.subpage = self.teletext.colorbuttons[0][1]
-        self.home()
-
-    def greenbuttonHandler(self, *args, **kwargs):
-        self.teletext.pagenum = self.teletext.colorbuttons[1][0]
-        self.teletext.subpage = self.teletext.colorbuttons[1][1]
-        self.home()
-
-    def yellowbuttonHandler(self, *args, **kwargs):
-        self.teletext.pagenum = self.teletext.colorbuttons[2][0]
-        self.teletext.subpage = self.teletext.colorbuttons[2][1]
-        self.home()
-
-    def bluebuttonHandler(self, *args, **kwargs):
-        self.teletext.pagenum = self.teletext.colorbuttons[3][0]
-        self.teletext.subpage = self.teletext.colorbuttons[3][1]
-        self.home()
+        if self.country == "hu":
+            prevsubpage = self.teletext.prevSubpage
+            if prevsubpage == None:
+                pass
+            else:
+                self.teletext.pagenum = prevsubpage[0]
+                self.teletext.subpage = prevsubpage[1]
+                self.home()
+        else:
+            prevsubpage = int(self.teletext.subpage)-1
+            if prevsubpage >= 1:
+                self.teletext.subpage = f"{prevsubpage:02d}"
+                self.home()
     
     def collapse(self, *args, **kwargs):
         self.window.set_collapsed(not self.window.get_collapsed())
@@ -1121,262 +459,16 @@ class MainWindow(Gtk.ApplicationWindow):
         #     self.window.set_collapsed(True)
 
     def countrySelect(self, *args, **kwargs):
-        match args[0].get_child().get_text():
-            case "🇭🇺 MTVA":
-                self.country = "hu"
-                self.init()
-                self.teletext.stationid = "mtva"
-                self.home()
-            case "🇦🇹 ORF 1":
-                self.country = "at"
-                self.init()
-                self.teletext.stationid = "orf1"
-                self.home()
-            case "🇦🇹 ORF 2":
-                self.country = "at"
-                self.init()
-                self.teletext.stationid = "orf2"
-                self.home()
-            case "🇦🇹 ORF III":
-                self.country = "at"
-                self.init()
-                self.teletext.stationid = "orfiii"
-                self.home()
-            case "🇦🇹 ORF Sport Plus":
-                self.country = "at"
-                self.init()
-                self.teletext.stationid = "sportplus"
-                self.home()
-            case "🇦🇹 SAT.1":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "s1at"
-                self.home()
-            case "🇦🇹 ProSieben":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "p7at"
-                self.home()
-            case "🇦🇹 kabel eins":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "k1at"
-                self.home()
-            case "🇦🇹 sixx":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "sixxat"
-                self.home()
-            case "🇦🇹 SAT.1 Gold":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "s1goldat"
-                self.home()
-            case "🇦🇹 ProSieben MAXX":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "p7maxxat"
-                self.home()
-            case "🇦🇹 kabel eins Doku":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "k1dokuat"
-                self.home()
-            case "🇩🇪 ZDF":
-                self.country = "de"
-                self.init()
-                self.teletext.stationid = "zdf"
-                self.home()
-            case "🇩🇪 ZDFneo":
-                self.country = "de"
-                self.init()
-                self.teletext.stationid = "zdfneo"
-                self.home()
-            case "🇩🇪 ZDFinfo":
-                self.country = "de"
-                self.init()
-                self.teletext.stationid = "zdfinfo"
-                self.home()
-            case "🇩🇪 3sat":
-                self.country = "de"
-                self.init()
-                self.teletext.stationid = "3sat"
-                self.home()
-            case "🇩🇪 ARD":
-                self.country = "other2"
-                self.init()
-                self.teletext.stationid = "br-alpha"
-                self.home()
-            case "🇩🇪 Arte":
-                self.country = "other2"
-                self.init()
-                self.teletext.stationid = "DE_arte"
-                self.home()
-            case "🇩🇪 KiKa":
-                self.country = "kika"
-                self.init()
-                self.home()
-            case "🇩🇪 SAT.1":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "s1de"
-                self.home()
-            case "🇩🇪 ProSieben":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "p7de"
-                self.home()
-            case "🇩🇪 kabel eins":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "k1de"
-                self.home()
-            case "🇩🇪 sixx":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "sixx"
-                self.home()
-            case "🇩🇪 SAT.1 Gold":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "s1gold"
-                self.home()
-            case "🇩🇪 ProSieben MAXX":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "p7maxx"
-                self.home()
-            case "🇩🇪 kabel eins Doku":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "k1doku"
-                self.home()
-            case "🇩🇪 RBB":
-                self.country = "other2"
-                self.init()
-                self.teletext.stationid = "rbb"
-                self.home()
-            case "🇩🇪 MDR":
-                self.country = "other2"
-                self.init()
-                self.teletext.stationid = "mdr-sachsen"
-                self.home()
-            case "🇮🇹 Rai (slow)":
-                self.country = "it"
-                self.init()
-                self.home()
-            case "🇸🇪 SVT":
-                self.country = "se"
-                self.init()
-                self.home()
-            case "🇨🇭 SRF 1":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "srf1"
-                self.home()
-            case "🇨🇭 SRF zwei":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "srfzwei"
-                self.home()
-            case "🇨🇭 SRF Info":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "srfinfo"
-                self.home()
-            case "🇨🇭 RTS 1":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "rtsun"
-                self.home()
-            case "🇨🇭 RTS 2":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "rtsdeux"
-                self.home()
-            case "🇨🇭 RSI LA 1":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "rsila1"
-                self.home()
-            case "🇨🇭 RSI LA 2":
-                self.country = "ch"
-                self.init()
-                self.teletext.stationid = "rsila2"
-                self.home()
-            case "🇨🇭 SAT.1":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "s1ch"
-                self.home()
-            case "🇨🇭 ProSieben":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "p7ch"
-                self.home()
-            case "🇨🇭 kabel eins":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "k1ch"
-                self.home()
-            case "🇨🇭 sixx":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "sixxch"
-                self.home()
-            case "🇨🇭 SAT.1 Gold":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "s1goldch"
-                self.home()
-            case "🇨🇭 ProSieben MAXX":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "p7maxxch"
-                self.home()
-            case "🇨🇭 Puls8":
-                self.country = "other"
-                self.init()
-                self.teletext.stationid = "puls8ch"
-                self.home()
-            case "🇨🇿 ČT":
-                self.country = "cz"
-                self.init()
-                self.home()
-            case "🇫🇮 Yle":
-                self.country = "fi"
-                self.init()
-                self.home()
-            case "🇩🇰 DR":
-                self.country = "dk"
-                self.init()
-                self.home()
-            case "🇪🇸 TVE":
-                self.country = "es"
-                self.init()
-                self.home()
-            case "🇵🇱 TVP 1":
-                self.country = "pl"
-                self.init()
-                self.teletext.stationid = "TG1"
-                self.home()
-            case "🇵🇱 TVP 2":
-                self.country = "pl"
-                self.init()
-                self.teletext.stationid = "TG2"
-                self.home()
-            case "🇧🇦 BHRT":
-                self.country = "ba"
-                self.init()
-                self.home()
-            case "🇳🇱 NOS":
-                self.country = "nl"
-                self.init()
-                self.home()
-            case "🇭🇷 HRT":
-                self.country = "hr"
-                self.init()
-                self.home()
+        value = args[0].get_child().get_text()
+        for i in range(len(self.countries)):
+            try:
+                if value == self.countries[i][0]:
+                    self.country = self.countries[i][1]
+                    self.init()
+                    self.teletext.stationid = self.countries[i][2]
+                    self.home()
+            except:
+                pass
     
     def init(self, *args, **kwargs):
         match self.country:
@@ -1414,6 +506,8 @@ class MainWindow(Gtk.ApplicationWindow):
                 self.teletext = nlTeletextReader()
             case "hr":
                 self.teletext = hrTeletextReader()
+            case "xx":
+                self.teletext = xxTeletextReader()
 
     def stationSwitcher(self, *args, **kwargs):
         if self.teletext.stationid != self.stations[self.togglegroup.get_active()].replace(" ", ""):
@@ -1440,7 +534,7 @@ class MainWindow(Gtk.ApplicationWindow):
     
     def otherstationSwitcher(self, *args, **kwargs):
         selected = self.stationdd.get_selected_item().get_string()
-        result = re.search('^.*\((.*)\)', selected)
+        result = re.search(r'^.*\((.*)\)', selected)
 
         if self.teletext.stationid != result.group(1):
             self.teletext.stationid = result.group(1)
@@ -1452,13 +546,16 @@ class MainWindow(Gtk.ApplicationWindow):
         self.dialog.present()
 
     def favouritesPage(self, *args, **kwargs):
+        scroll = Gtk.ScrolledWindow()
+        self.content.set_child(scroll)
+
         mainbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
         mainbox.set_css_classes(["favouritesbox"])
 
-        self.content.set_child(mainbox)
+        scroll.set_child(mainbox)
 
         for favourite in self.favourites:
-            button = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
+            button = Gtk.CenterBox()
             button.set_css_classes(["favourites"])
 
             favbutton = Gtk.Button()
@@ -1470,11 +567,11 @@ class MainWindow(Gtk.ApplicationWindow):
             favbutton.set_child(label)
             favbutton.set_halign(Gtk.Align.START)
             favbutton.connect('clicked', self.gotoFavourite)
-            button.append(favbutton)
+            button.set_start_widget(favbutton)
 
             endbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL)
             endbox.set_halign(Gtk.Align.END)
-            button.append(endbox)
+            button.set_end_widget(endbox)
 
             label = Gtk.Label()
             label.set_css_classes(["favlabel"])
@@ -1487,12 +584,40 @@ class MainWindow(Gtk.ApplicationWindow):
             endbox.append(remove)
 
             mainbox.append(button)
+        if len(self.favourites) == 0:
+            label = Gtk.Label()
+            label.set_markup('<span weight="bold" size="x-large">There are no favorites right now.</span>')
+            
+            label.set_halign(Gtk.Align.CENTER)
+            label.set_valign(Gtk.Align.CENTER)
+            mainbox.append(label)
 
     def removeFavourite(self, *args, **kwargs):
-        print(args)
+        pagenum = args[0].get_parent().get_parent().get_start_widget().get_child().get_text()
+        value = args[0].get_parent().get_first_child().get_text()
+        for favorite in self.favourites:
+            if favorite[0] == pagenum and favorite[1] == value:
+                self.favourites.remove(favorite)
+        self.favouritesPage()
     
     def gotoFavourite(self, *args, **kwargs):
-        print(args)
+        pagenum = args[0].get_child().get_text()
+        value = args[0].get_parent().get_end_widget().get_first_child().get_text()
+        for i in range(len(self.countries)):
+            if self.countries[i][0] == value:
+                self.country = self.countries[i][1]
+                self.init()
+                self.teletext.stationid = self.countries[i][2]
+                self.teletext.pagenum = pagenum
+                self.home()
+
+    def addFavorite(self, *args, **kwargs):
+        for i in range(len(self.countries)):
+            if self.country == self.countries[i][1] and self.teletext.stationid == self.countries[i][2]:
+                value = [str(self.teletext.pagenum), self.countries[i][0]]
+        if value not in self.favourites:
+            self.favourites.append(value)
+        
 
 class MyApp(Adw.Application):
     def __init__(self, **kwargs):
