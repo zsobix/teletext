@@ -30,6 +30,46 @@ If you downloaded it from PyPI, just run:
 teletext
 ```
 
+## Challenges?
+
+hmm
+
+i feel this is very unreadme like but my hand was forced.
+
+The hardest thing was working around weird html, sometimes HTM pages.
+
+I don't understand why APIs aren't universal.
+
+Like, WHY do i have to scrape websites to get just a basic SUBPAGE NUMBER.
+
+Not in the case of ZDF, ARD, and NOS, but other than those they had actual pre rendered pages, which i can access when i just substitute the pagenumbers and subpage numbers and make a get request.
+
+Also there were some services, with FUNCTIONAL APIs, but they provided base64 images, instead of just a link, which is good, but it was a bit harder to implement.
+
+(more included in the open letter)
+
+## Open letter to the devs of ZDF, ARD, and NOS
+
+(this part is just me rambling btw)
+
+Dear ZDF, ARD, and NOS, honestly just stop.
+
+I had gotten brain damage from trying to implement your teletext services into my project
+
+i dont know how you guys do this but this is insane.
+
+I fully understand that this isnt intented behaivor, but cmon, atleast include a pre-rendered IMAGE!!!!!!!
+
+I DONT WANT TEXT!!!!!!! I WANT IMAGES!!!!!!! just because:
+
+- I dont have to use WebKitGTK (slow af)
+- I get to just use the Gtk.Image function!!!!
+- sometimes, I HAVE TO MAKE HTML PAGES BY HAND!!! then write them into tmp -> then i can display them, atleast ZDF has a page-only site, not like YOU, NOS.
+
+sincerely, 
+
+my braincells
+
 ## Issues
 there are bugs I probably didn't notice, so pls write in the issues tab!
  
@@ -39,4 +79,10 @@ there are bugs I probably didn't notice, so pls write in the issues tab!
 ## Credits
 
 - myself for making this
+- teletext services for making garbage apis
+- ted for doing ted talks
 - [Hack Club](https://hackclub.com) for making [Stardance!](https://stardance.hackclub.com)
+
+please rate my project good pls
+
+[THE ISSUE with writing readmes](THEISSUE.md)
