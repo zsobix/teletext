@@ -15,6 +15,8 @@ or
 
 ### Download from PyPI
 
+> You have to follow [this guide](https://pygobject.gnome.org/getting_started.html) first before running this command, so this method is **NOT recommended**
+
 ```bash
 pip install teletext
 ```
@@ -25,7 +27,7 @@ If you downloaded it from the releases, just run the app and enjoy!
 
 Or 
 
-If you downloaded it from PyPI, just run:
+If you downloaded it from PyPI (and followed the instructions), just run:
 ```bash
 teletext
 ```
