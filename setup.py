@@ -7,7 +7,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="teletext",
-    version="0.1.0",
+    version="0.1.1",
     author="Zsombor Kalmar",
     description="Desktop version of some Teletext services.",
     long_description=long_description,
@@ -35,7 +35,9 @@ setup(
     python_requires=">=3.8",
     install_requires=[
         "requests >= 2.34.2",
-        "beautifulsoup4 >= 4.15.0"
+        "beautifulsoup4 >= 4.15.0",
+        "PyGObject >= 3.56.3",
+        "pycairo >= 1.29.1"
     ],
     entry_points={
         "console_scripts": [
