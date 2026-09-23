@@ -8,14 +8,16 @@ A desktop UI for some Teletext services, written in Python using GTK and libadwa
 ## Installation
 > This only works on Linux, because I can't package on Windows, and GTK doesn't work as well there
 
-**IMPORTANT:**
-**You need to install ```gvfs``` and ```webkitgtk-6.0``` before running installing!!!!**
-(on arch)
 
 ### Download from releases
-Just head to the releases and download the executable!
+Just download the flatpak package and install!
 
-or
+Install with:
+```bash
+flatpak install xyz.zsobix.teletext.flatpak
+```
+
+**OR**
 
 ### Download from PyPI
 
@@ -29,7 +31,12 @@ pip install teletext
 
 If you downloaded it from the releases, just run the app and enjoy!
 
-Or 
+(you may need to run it with: )
+```bash
+flatpak run xyz.zsobix.teletext
+```
+
+**OR**
 
 If you downloaded it from PyPI (and followed the instructions), just run:
 ```bash
