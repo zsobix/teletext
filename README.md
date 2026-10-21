@@ -43,6 +43,14 @@ If you downloaded it from PyPI (and followed the instructions), just run:
 teletext
 ```
 
+### Features
+
+- Displaying teletext pages
+- Favorites page
+- Sidebar to change countries/teletext channels
+- About page
+
+
 ## Challenges?
 
 hmm
